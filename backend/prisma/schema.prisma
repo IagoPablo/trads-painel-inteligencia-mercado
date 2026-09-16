@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum LocationType {
+  STATE
+  MUNICIPALITY
+}
+
+enum IndicatorType {
+  POPULATION
+  HOUSEHOLD_INCOME
+  GDP
+  GDP_PER_CAPITA
+  AGE_GROUP
+}
+
+model Location {
+  id       String       @id @default(uuid())
+  ibgeCode String       @unique
+  name     String
+  type     LocationType
+  parentId String?
+
+  parent     Location?         @relation("LocationHierarchy", fields: [parentId], references: [id])
+  children   Location[]        @relation("LocationHierarchy")
+  indicators MarketIndicator[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type])
+  @@index([parentId])
+}
+
+model MarketIndicator {
+  id              String        @id @default(uuid())
+  locationId      String
+  indicator       IndicatorType
+  value           Decimal
+  unit            String
+  referencePeriod Int
+  dimension       String?
+  source          String
+  ibgeTable       String?
+  ibgeVariable    String?
+
+  location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([locationId, indicator, referencePeriod, dimension])
+  @@index([locationId])
+  @@index([indicator])
+  @@index([referencePeriod])
+}
