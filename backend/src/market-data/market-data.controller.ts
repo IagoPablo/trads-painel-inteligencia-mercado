@@ -15,6 +15,11 @@ export class MarketDataController {
   syncHouseholdIncome() {
   return this.marketDataService.syncHouseholdIncome(2022);
  }
+ 
+ @Post('sync/age-groups')
+  syncAgeGroups() {
+  return this.marketDataService.syncAgeGroups(2022);
+ }
 
   @Get('count')
   countIndicators() {

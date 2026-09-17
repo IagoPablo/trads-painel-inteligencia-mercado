@@ -191,6 +191,231 @@ async syncHouseholdIncome(referencePeriod: number) {
   };
  }
  
+  private splitIntoBatches<T>(items: T[], batchSize: number): T[][] {
+  const batches: T[][] = [];
+
+  for (let i = 0; i < items.length; i += batchSize) {
+    batches.push(items.slice(i, i + batchSize));
+  }
+
+  return batches;
+ }
+
+ async syncAgeGroups(referencePeriod: number) {
+  const locations = await this.prisma.location.findMany({
+    where: {
+      type: 'MUNICIPALITY',
+    },
+    select: {
+      id: true,
+      ibgeCode: true,
+      parentId: true,
+    },
+  });
+
+  const batchSize = 50;
+
+  const locationMap = new Map(
+    locations.map((location) => [location.ibgeCode, location]),
+  ); 
+  
+  const municipalitiesByState = new Map<string, string[]>();
+
+  for (const location of locations) {
+    if (!location.parentId) {
+      continue;
+    }
+
+    const municipalities =
+      municipalitiesByState.get(location.parentId) ?? [];
+
+    municipalities.push(location.ibgeCode);
+
+    municipalitiesByState.set(location.parentId, municipalities);
+  }
+
+  const ageGroups = [
+    {
+      dimension: '0-14',
+      sourceCodes: ['93070', '93084', '93085'],
+    },
+    {
+      dimension: '15-24',
+      sourceCodes: ['93086', '93087'],
+    },
+    {
+      dimension: '25-34',
+      sourceCodes: ['93088', '93089'],
+    },
+    {
+      dimension: '35-44',
+      sourceCodes: ['93090', '93091'],
+    },
+    {
+      dimension: '45-54',
+      sourceCodes: ['93092', '93093'],
+    },
+    {
+      dimension: '55-64',
+      sourceCodes: ['93094', '93095'],
+    },
+    {
+      dimension: '65+',
+      sourceCodes: [
+        '93096',
+        '93097',
+        '93098',
+        '49108',
+        '49109',
+        '60040',
+        '60041',
+        '6653',
+      ],
+    },
+  ];
+
+  const indicators: {
+    locationId: string;
+    indicator: 'AGE_GROUP';
+    value: string;
+    unit: string;
+    referencePeriod: number;
+    dimension: string;
+    source: string;
+    ibgeTable: string;
+    ibgeVariable: string;
+  }[] = [];
+
+  let ibgeRecords = 0;
+
+  for (const municipalityCodes of municipalitiesByState.values()) {
+  const batches = this.splitIntoBatches(
+    municipalityCodes,
+    batchSize,
+  );
+
+  for (const batch of batches) {
+    const result =
+      await this.ibgeService.getAgeGroupsByMunicipalities(
+        batch,
+        referencePeriod,
+      );
+
+    const results = result?.[0]?.resultados;
+
+    if (!Array.isArray(results)) {
+      throw new Error('Formato inesperado na resposta do IBGE.');
+    }
+
+    ibgeRecords += results.length;
+
+    for (const resultItem of results) {
+      const ageClassification = resultItem.classificacoes?.find(
+        (classification) => classification.id === '287',
+      );
+
+      if (!ageClassification?.categoria) {
+        continue;
+      }
+
+      const ageCategoryCodes = Object.keys(
+        ageClassification.categoria,
+      );
+
+      const ageCategoryCode = ageCategoryCodes[0];
+
+      if (!ageCategoryCode) {
+        continue;
+      }
+
+      const targetGroup = ageGroups.find((group) =>
+        group.sourceCodes.includes(ageCategoryCode),
+      );
+
+      if (!targetGroup) {
+        continue;
+      }
+
+      const series = resultItem.series;
+
+      if (!Array.isArray(series)) {
+        continue;
+      }
+
+      for (const serie of series) {
+        const location = locationMap.get(serie.localidade.id);
+
+        if (!location) {
+          continue;
+        }
+
+  const rawValue = serie.serie?.[String(referencePeriod)];
+
+  if (rawValue === undefined || rawValue === null) {
+  continue;
+ }
+
+      const numericValue = Number(rawValue);
+
+      if (!Number.isFinite(numericValue)) {
+        continue;
+      }
+
+        const existing = indicators.find(
+          (indicator) =>
+            indicator.locationId === location.id &&
+            indicator.dimension === targetGroup.dimension,
+        );
+
+        if (existing) {
+          existing.value = String(
+            Number(existing.value) + Number(numericValue),
+          );
+        } else {
+          indicators.push({
+            locationId: location.id,
+            indicator: 'AGE_GROUP',
+            value: String(numericValue),
+            unit: 'Pessoas',
+            referencePeriod,
+            dimension: targetGroup.dimension,
+            source: 'IBGE',
+            ibgeTable: '9514',
+            ibgeVariable: '93',
+          });
+        }
+      }
+    }
+  }
+ }
+
+ await this.prisma.$transaction(
+    async (tx) => {
+      await tx.marketIndicator.deleteMany({
+        where: {
+          indicator: 'AGE_GROUP',
+          referencePeriod,
+        },
+      });
+
+
+    if (indicators.length > 0) {
+        await tx.marketIndicator.createMany({
+          data: indicators,
+        });
+      }
+    },
+    {
+      timeout: 60000,
+    },
+  );
+
+  return {
+    ibgeRecords,
+    indicatorsCreated: indicators.length,
+  }; 
+}
+
   async countIndicators() {
     return this.prisma.marketIndicator.count();
  }
