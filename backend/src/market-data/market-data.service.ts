@@ -445,9 +445,9 @@ async syncHouseholdIncome(referencePeriod: number) {
   };
 
   const sortIndicator =
-    filters.sortBy === 'householdIncome'
-      ? 'HOUSEHOLD_INCOME'
-      : 'POPULATION';
+  filters.sortBy === 'householdIncome'
+    ? 'HOUSEHOLD_INCOME'
+    : 'POPULATION';
 
   const order = filters.order === 'asc' ? 'asc' : 'desc';
 
@@ -470,16 +470,16 @@ async syncHouseholdIncome(referencePeriod: number) {
       },
       skip,
       take: limit,
-    }),
+  }),
 
-    this.prisma.marketIndicator.count({
-      where: {
-        indicator: sortIndicator,
-        referencePeriod: 2022,
-        location: locationWhere,
-      },
-    }),
-  ]);
+  this.prisma.marketIndicator.count({
+    where: {
+      indicator: sortIndicator,
+      referencePeriod: 2022,
+      location: locationWhere,
+     },
+   }),
+ ]);
 
   const locationIds = sortedIndicators.map((item) => item.locationId);
 
@@ -489,11 +489,11 @@ async syncHouseholdIncome(referencePeriod: number) {
         in: locationIds,
       },
       indicator: {
-        in: ['POPULATION', 'HOUSEHOLD_INCOME'],
+        in: ['POPULATION', 'HOUSEHOLD_INCOME', 'AGE_GROUP'],
       },
       referencePeriod: 2022,
-    },
-  });
+   },
+ });
 
   const indicatorsByLocation = new Map<string, typeof otherIndicators>();
 
@@ -506,15 +506,26 @@ async syncHouseholdIncome(referencePeriod: number) {
   }
 
   const data = sortedIndicators.map((item) => {
-    const indicators = indicatorsByLocation.get(item.locationId) ?? [];
+  const indicators = indicatorsByLocation.get(item.locationId) ?? [];
 
-    const populationIndicator = indicators.find(
-      (indicator) => indicator.indicator === 'POPULATION',
-    );
+  const populationIndicator = indicators.find(
+    (indicator) => indicator.indicator === 'POPULATION',
+  );
 
-    const householdIncomeIndicator = indicators.find(
-      (indicator) => indicator.indicator === 'HOUSEHOLD_INCOME',
-    );
+  const householdIncomeIndicator = indicators.find(
+    (indicator) => indicator.indicator === 'HOUSEHOLD_INCOME',
+  );
+
+  const ageIndicators = indicators.filter(
+    (indicator) => indicator.indicator === 'AGE_GROUP',
+  );
+
+  const ageGroups = Object.fromEntries(
+    ageIndicators.map((indicator) => [
+      indicator.dimension,
+      Number(indicator.value),
+    ]),
+  );
 
     return {
       municipality: item.location.name,
@@ -527,6 +538,7 @@ async syncHouseholdIncome(referencePeriod: number) {
       householdIncome: householdIncomeIndicator
         ? Number(householdIncomeIndicator.value)
         : null,
+      ageGroups,
     };
   });
 
