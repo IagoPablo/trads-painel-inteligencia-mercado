@@ -11,6 +11,11 @@ export class MarketDataController {
     return this.marketDataService.syncPopulation(2022);
   }
 
+  @Post('sync/household-income')
+  syncHouseholdIncome() {
+  return this.marketDataService.syncHouseholdIncome(2022);
+ }
+
   @Get('count')
   countIndicators() {
     return this.marketDataService.countIndicators();

@@ -118,6 +118,79 @@ export class MarketDataService {
     indicatorsCreated: syncResult,
   };
 }
+
+async syncHouseholdIncome(referencePeriod: number) {
+  const result =
+    await this.ibgeService.getHouseholdIncomeByMunicipality(
+      referencePeriod,
+    );
+
+  const series = result?.[0]?.resultados?.[0]?.series;
+
+  if (!Array.isArray(series)) {
+    throw new Error('Resposta inesperada da API do IBGE.');
+  }
+
+  const locations = await this.prisma.location.findMany({
+    where: {
+      type: 'MUNICIPALITY',
+    },
+    select: {
+      id: true,
+      ibgeCode: true,
+    },
+  });
+
+  const locationMap = new Map(
+    locations.map((location) => [location.ibgeCode, location.id]),
+  );
+
+  const indicators = series
+    .map((item) => {
+      const locationId = locationMap.get(item.localidade.id);
+      const value = item.serie?.[String(referencePeriod)];
+
+      if (!locationId || value === undefined || value === null) {
+        return null;
+      }
+
+      return {
+        locationId,
+        indicator: 'HOUSEHOLD_INCOME' as const,
+        value: String(value),
+        unit: 'Reais',
+        referencePeriod,
+        dimension: null,
+        source: 'IBGE',
+        ibgeTable: '10295',
+        ibgeVariable: '13431',
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null);
+
+  await this.prisma.$transaction(async (tx) => {
+    await tx.marketIndicator.deleteMany({
+      where: {
+        indicator: 'HOUSEHOLD_INCOME',
+        referencePeriod,
+      },
+    });
+
+    if (indicators.length > 0) {
+      await tx.marketIndicator.createMany({
+        data: indicators,
+      });
+    }
+  });
+
+  return {
+    ibgeRecords: series.length,
+    locationsFound: indicators.length,
+    locationsMissing: series.length - indicators.length,
+    indicatorsCreated: indicators.length,
+  };
+ }
+ 
   async countIndicators() {
     return this.prisma.marketIndicator.count();
  }
@@ -131,28 +204,35 @@ export class MarketDataService {
   const limit = filters.limit ?? 20;
   const skip = (page - 1) * limit;
 
-  const where = {
-    indicator: 'POPULATION' as const,
-    referencePeriod: 2022,
-    location: {
-      type: 'MUNICIPALITY' as const,
-      name: filters.municipality
-        ? {
-            equals: filters.municipality,
-            mode: 'insensitive' as const,
-          }
-        : undefined,
-      parent: stateCode
-        ? {
-            ibgeCode: stateCode,
-          }
-        : undefined,
-    },
+  const locationWhere = {
+    type: 'MUNICIPALITY' as const,
+    name: filters.municipality
+      ? {
+          equals: filters.municipality,
+          mode: 'insensitive' as const,
+        }
+      : undefined,
+    parent: stateCode
+      ? {
+          ibgeCode: stateCode,
+        }
+      : undefined,
   };
 
-  const [indicators, total] = await Promise.all([
+  const sortIndicator =
+    filters.sortBy === 'householdIncome'
+      ? 'HOUSEHOLD_INCOME'
+      : 'POPULATION';
+
+  const order = filters.order === 'asc' ? 'asc' : 'desc';
+
+  const [sortedIndicators, total] = await Promise.all([
     this.prisma.marketIndicator.findMany({
-      where,
+      where: {
+        indicator: sortIndicator,
+        referencePeriod: 2022,
+        location: locationWhere,
+      },
       include: {
         location: {
           include: {
@@ -160,25 +240,70 @@ export class MarketDataService {
           },
         },
       },
-      orderBy:
-        filters.sortBy === 'population'
-          ? {
-              value: filters.order === 'asc' ? 'asc' : 'desc',
-            }
-          : undefined,
+      orderBy: {
+        value: order,
+      },
       skip,
       take: limit,
     }),
-    this.prisma.marketIndicator.count({ where }),
+
+    this.prisma.marketIndicator.count({
+      where: {
+        indicator: sortIndicator,
+        referencePeriod: 2022,
+        location: locationWhere,
+      },
+    }),
   ]);
 
-  const data = indicators.map((item) => ({
-    municipality: item.location.name,
-    state: item.location.parent?.name ?? null,
-    stateCode: item.location.parent?.ibgeCode ?? null,
-    ibgeCode: item.location.ibgeCode,
-    population: Number(item.value),
-  }));
+  const locationIds = sortedIndicators.map((item) => item.locationId);
+
+  const otherIndicators = await this.prisma.marketIndicator.findMany({
+    where: {
+      locationId: {
+        in: locationIds,
+      },
+      indicator: {
+        in: ['POPULATION', 'HOUSEHOLD_INCOME'],
+      },
+      referencePeriod: 2022,
+    },
+  });
+
+  const indicatorsByLocation = new Map<string, typeof otherIndicators>();
+
+  for (const indicator of otherIndicators) {
+    const current = indicatorsByLocation.get(indicator.locationId) ?? [];
+
+    current.push(indicator);
+
+    indicatorsByLocation.set(indicator.locationId, current);
+  }
+
+  const data = sortedIndicators.map((item) => {
+    const indicators = indicatorsByLocation.get(item.locationId) ?? [];
+
+    const populationIndicator = indicators.find(
+      (indicator) => indicator.indicator === 'POPULATION',
+    );
+
+    const householdIncomeIndicator = indicators.find(
+      (indicator) => indicator.indicator === 'HOUSEHOLD_INCOME',
+    );
+
+    return {
+      municipality: item.location.name,
+      state: item.location.parent?.name ?? null,
+      stateCode: item.location.parent?.ibgeCode ?? null,
+      ibgeCode: item.location.ibgeCode,
+      population: populationIndicator
+        ? Number(populationIndicator.value)
+        : null,
+      householdIncome: householdIncomeIndicator
+        ? Number(householdIncomeIndicator.value)
+        : null,
+    };
+  });
 
   return {
     data,

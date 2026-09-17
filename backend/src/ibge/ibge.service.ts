@@ -39,4 +39,13 @@ export class IbgeService {
 
     return response.data;
   }
+  async getHouseholdIncomeByMunicipality(referencePeriod: number) {
+    const response = await firstValueFrom(
+      this.httpService.get(
+        `${this.agregadosBaseUrl}/10295/periodos/${referencePeriod}/variaveis/13431?localidades=N6[all]&classificacao=2[6794]|86[95251]|58[95253]`,
+      ),
+    );
+
+    return response.data;
+  }
 }

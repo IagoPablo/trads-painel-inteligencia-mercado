@@ -11,6 +11,7 @@ import {
 
 enum MarketDataSortBy {
   POPULATION = 'population',
+  HOUSEHOLD_INCOME = 'householdIncome',
 }
 
 enum SortOrder {
@@ -24,6 +25,7 @@ export class FindMarketDataDto {
   @Matches(/^[A-Za-z]{2}$/, {
     message: 'state deve ser uma sigla de UF com 2 letras.',
   })
+  
   @Transform(({ value }) =>
     typeof value === 'string' ? value.toUpperCase() : value,
   )
@@ -35,7 +37,7 @@ export class FindMarketDataDto {
 
   @IsOptional()
   @IsEnum(MarketDataSortBy, {
-    message: 'sortBy deve ser "population".',
+  message: 'sortBy deve ser "population" ou "householdIncome".',
   })
   sortBy?: MarketDataSortBy;
 
