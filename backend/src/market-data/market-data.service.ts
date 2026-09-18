@@ -430,9 +430,9 @@ async syncHouseholdIncome(referencePeriod: number) {
   const locationWhere = this.buildLocationWhere(filters);
 
   const sortIndicator =
-  filters.sortBy === 'householdIncome'
-    ? 'HOUSEHOLD_INCOME'
-    : 'POPULATION';
+    filters.sortBy === 'householdIncome'
+      ? 'HOUSEHOLD_INCOME'
+      : 'POPULATION';
 
   const order = filters.order === 'asc' ? 'asc' : 'desc';
 
@@ -455,75 +455,140 @@ async syncHouseholdIncome(referencePeriod: number) {
       },
       skip,
       take: limit,
-  }),
+    }),
 
-  this.prisma.marketIndicator.count({
-    where: {
-      indicator: sortIndicator,
-      referencePeriod: 2022,
-      location: locationWhere,
-     },
-   }),
- ]);
-
-  const locationIds = sortedIndicators.map((item) => item.locationId);
-
-  const otherIndicators = await this.prisma.marketIndicator.findMany({
-    where: {
-      locationId: {
-        in: locationIds,
+    this.prisma.marketIndicator.count({
+      where: {
+        indicator: sortIndicator,
+        referencePeriod: 2022,
+        location: locationWhere,
       },
-      indicator: {
-        in: ['POPULATION', 'HOUSEHOLD_INCOME', 'AGE_GROUP'],
-      },
-      referencePeriod: 2022,
-   },
- });
+    }),
+  ]);
 
-  const indicatorsByLocation = new Map<string, typeof otherIndicators>();
+  let rankingPosition: number | null = null;
+
+  if (filters.municipality) {
+    const selectedIndicator =
+      await this.prisma.marketIndicator.findFirst({
+        where: {
+          indicator: sortIndicator,
+          referencePeriod: 2022,
+          location: locationWhere,
+        },
+      });
+
+    if (selectedIndicator) {
+      const rankingLocationWhere =
+        this.buildLocationWhere({
+          ...filters,
+          municipality: undefined,
+        });
+
+      const betterIndicators =
+        await this.prisma.marketIndicator.count({
+          where: {
+            indicator: sortIndicator,
+            referencePeriod: 2022,
+            location: rankingLocationWhere,
+            value:
+              order === 'desc'
+                ? {
+                    gt: selectedIndicator.value,
+                  }
+                : {
+                    lt: selectedIndicator.value,
+                  },
+          },
+        });
+
+      rankingPosition = betterIndicators + 1;
+    }
+  }
+
+  const locationIds = sortedIndicators.map(
+    (item) => item.locationId,
+  );
+
+  const otherIndicators =
+    await this.prisma.marketIndicator.findMany({
+      where: {
+        locationId: {
+          in: locationIds,
+        },
+        indicator: {
+          in: [
+            'POPULATION',
+            'HOUSEHOLD_INCOME',
+            'AGE_GROUP',
+          ],
+        },
+        referencePeriod: 2022,
+      },
+    });
+
+  const indicatorsByLocation = new Map<
+    string,
+    typeof otherIndicators
+  >();
 
   for (const indicator of otherIndicators) {
-    const current = indicatorsByLocation.get(indicator.locationId) ?? [];
+    const current =
+      indicatorsByLocation.get(indicator.locationId) ?? [];
 
     current.push(indicator);
 
-    indicatorsByLocation.set(indicator.locationId, current);
+    indicatorsByLocation.set(
+      indicator.locationId,
+      current,
+    );
   }
 
   const data = sortedIndicators.map((item) => {
-  const indicators = indicatorsByLocation.get(item.locationId) ?? [];
+    const indicators =
+      indicatorsByLocation.get(item.locationId) ?? [];
 
-  const populationIndicator = indicators.find(
-    (indicator) => indicator.indicator === 'POPULATION',
-  );
+    const populationIndicator = indicators.find(
+      (indicator) =>
+        indicator.indicator === 'POPULATION',
+    );
 
-  const householdIncomeIndicator = indicators.find(
-    (indicator) => indicator.indicator === 'HOUSEHOLD_INCOME',
-  );
+    const householdIncomeIndicator =
+      indicators.find(
+        (indicator) =>
+          indicator.indicator ===
+          'HOUSEHOLD_INCOME',
+      );
 
-  const ageIndicators = indicators.filter(
-    (indicator) => indicator.indicator === 'AGE_GROUP',
-  );
+    const ageIndicators = indicators.filter(
+      (indicator) =>
+        indicator.indicator === 'AGE_GROUP',
+    );
 
-  const ageGroups = Object.fromEntries(
-    ageIndicators.map((indicator) => [
-      indicator.dimension,
-      Number(indicator.value),
-    ]),
-  );
+    const ageGroups = Object.fromEntries(
+      ageIndicators.map((indicator) => [
+        indicator.dimension,
+        Number(indicator.value),
+      ]),
+    );
 
     return {
       municipality: item.location.name,
       state: item.location.parent?.name ?? null,
-      stateCode: item.location.parent?.ibgeCode ?? null,
+      stateCode:
+        item.location.parent?.ibgeCode ?? null,
       ibgeCode: item.location.ibgeCode,
       population: populationIndicator
         ? Number(populationIndicator.value)
         : null,
-      householdIncome: householdIncomeIndicator
-        ? Number(householdIncomeIndicator.value)
-        : null,
+      householdIncome:
+        householdIncomeIndicator
+          ? Number(
+              householdIncomeIndicator.value,
+            )
+          : null,
       ageGroups,
+      rankingPosition,
     };
   });
 
@@ -533,10 +598,12 @@ async syncHouseholdIncome(referencePeriod: number) {
       page,
       limit,
       total,
-      totalPages: Math.ceil(total / limit),
+      totalPages: Math.ceil(
+        total / limit,
+      ),
     },
   };
- }
+}
   async getMarketDataSummary(filters: MarketDataFiltersDto) {
     const locationWhere = this.buildLocationWhere(filters);
 

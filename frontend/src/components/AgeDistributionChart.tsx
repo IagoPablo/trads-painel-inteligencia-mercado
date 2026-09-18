@@ -2,7 +2,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Cell,
+  Rectangle,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -34,7 +34,8 @@ function AgeDistributionChart({
   const chartData = ageGroups.map((ageGroup) => ({
     ageGroup,
     population: data.reduce(
-      (total, item) => total + (item.ageGroups[ageGroup] ?? 0),
+      (total, item) =>
+        total + (item.ageGroups[ageGroup] ?? 0),
       0,
     ),
   }));
@@ -61,18 +62,25 @@ function AgeDistributionChart({
 
           <Tooltip />
 
-          <Bar dataKey="population">
-            {chartData.map((item) => (
-                <Cell
-                key={item.ageGroup}
-                fill={
-                    selectedAgeGroup === item.ageGroup
-                    ? '#1d4ed8'
-                    : '#93c5fd'
-                }
+          <Bar
+            dataKey="population"
+            shape={(props) => {
+              const isSelected =
+                props.payload?.ageGroup ===
+                selectedAgeGroup;
+
+              return (
+                <Rectangle
+                  {...props}
+                  fill={
+                    isSelected
+                      ? '#1d4ed8'
+                      : '#93c5fd'
+                  }
                 />
-            ))}
-            </Bar>
+              );
+            }}
+          />
         </BarChart>
       </ResponsiveContainer>
     </section>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type {MarketFilters as MarketFiltersState, AgeGroup,} from '../types/market-filters';
 import type { Municipality } from '../types/location';
 import './MarketFilters.css';
@@ -20,6 +20,13 @@ const ageGroups: AgeGroup[] = [
   '65+',
 ];
 
+function normalizeText(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('pt-BR');
+}
+
 function MarketFilters({
   filters,
   municipalities,
@@ -28,6 +35,40 @@ function MarketFilters({
 }: MarketFiltersProps) {
   const [municipalitySearch, setMunicipalitySearch] =
     useState(filters.municipality);
+
+  const [isMunicipalitySearching, setIsMunicipalitySearching] =
+    useState(false);
+
+  const municipalityRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+  function handleClickOutside(event: MouseEvent) {
+    if (
+      municipalityRef.current &&
+      !municipalityRef.current.contains(
+        event.target as Node,
+      )
+    ) {
+      setIsMunicipalitySearching(false);
+    }
+  }
+
+  document.addEventListener(
+    'mousedown',
+    handleClickOutside,
+  );
+
+  return () => {
+    document.removeEventListener(
+      'mousedown',
+      handleClickOutside,
+    );
+  };
+}, []);
+
+useEffect(() => {
+  setMunicipalitySearch(filters.municipality);
+}, [filters.municipality]);
 
   function updateFilter<K extends keyof MarketFiltersState>(
     field: K,
@@ -41,6 +82,7 @@ function MarketFilters({
 
   function handleStateChange(state: string) {
     setMunicipalitySearch('');
+    setIsMunicipalitySearching(false);
 
     onChange({
       ...filters,
@@ -51,6 +93,7 @@ function MarketFilters({
 
   function handleMunicipalitySearch(value: string) {
     setMunicipalitySearch(value);
+    setIsMunicipalitySearching(true);
 
     onChange({
       ...filters,
@@ -58,10 +101,17 @@ function MarketFilters({
     });
   }
 
+  function handleMunicipalityFocus() {
+    if (filters.state) {
+      setIsMunicipalitySearching(true);
+    }
+  }
+
   function handleMunicipalitySelect(
     municipality: Municipality,
   ) {
     setMunicipalitySearch(municipality.name);
+    setIsMunicipalitySearching(false);
 
     updateFilter(
       'municipality',
@@ -69,20 +119,26 @@ function MarketFilters({
     );
   }
 
-  const filteredMunicipalities =
-    municipalitySearch.trim()
-      ? municipalities
-          .filter((municipality) =>
-            municipality.name
-              .toLocaleLowerCase('pt-BR')
-              .includes(
-                municipalitySearch
-                  .trim()
-                  .toLocaleLowerCase('pt-BR'),
-              ),
-          )
-          .slice(0, 20)
-      : [];
+  function handleMunicipalityClear() {
+    setMunicipalitySearch('');
+    setIsMunicipalitySearching(false);
+
+    updateFilter(
+      'municipality',
+      '',
+    );
+  }
+
+  const normalizedSearch =
+    normalizeText(municipalitySearch.trim());
+
+  const filteredMunicipalities = municipalities
+    .filter((municipality) =>
+      normalizeText(municipality.name).includes(
+        normalizedSearch,
+      ),
+    )
+    .slice(0, 20);
 
   return (
     <section className="market-filters">
@@ -139,7 +195,10 @@ function MarketFilters({
           Município
         </label>
 
-        <div className="municipality-autocomplete">
+        <div
+          className="municipality-autocomplete"
+          ref={municipalityRef}
+        >
           <input
             id="municipality"
             type="text"
@@ -150,9 +209,10 @@ function MarketFilters({
             }
             placeholder={
               filters.state
-                ? 'Digite o nome do município'
+                ? 'Todos os municípios'
                 : 'Selecione um estado primeiro'
             }
+            onFocus={handleMunicipalityFocus}
             onChange={(event) =>
               handleMunicipalitySearch(
                 event.target.value,
@@ -160,26 +220,38 @@ function MarketFilters({
             }
           />
 
-          {filteredMunicipalities.length > 0 && (
-            <div className="municipality-options">
-              {filteredMunicipalities.map(
-                (municipality) => (
-                  <button
-                    key={municipality.ibgeCode}
-                    type="button"
-                    className="municipality-option"
-                    onClick={() =>
-                      handleMunicipalitySelect(
-                        municipality,
-                      )
-                    }
-                  >
-                    {municipality.name}
-                  </button>
-                ),
-              )}
-            </div>
+          {municipalitySearch && (
+            <button
+              type="button"
+              className="municipality-clear"
+              onClick={handleMunicipalityClear}
+              aria-label="Limpar município"
+            >
+              ×
+            </button>
           )}
+
+          {isMunicipalitySearching &&
+            filteredMunicipalities.length > 0 && (
+              <div className="municipality-options">
+                {filteredMunicipalities.map(
+                  (municipality) => (
+                    <button
+                      key={municipality.ibgeCode}
+                      type="button"
+                      className="municipality-option"
+                      onClick={() =>
+                        handleMunicipalitySelect(
+                          municipality,
+                        )
+                      }
+                    >
+                      {municipality.name}
+                    </button>
+                  ),
+                )}
+              </div>
+            )}
         </div>
       </div>
 
@@ -199,7 +271,7 @@ function MarketFilters({
           }
         >
           <option value="">
-            Todos os Públicos
+            Todos os públicos
           </option>
 
           {ageGroups.map((ageGroup) => (
@@ -275,4 +347,3 @@ function MarketFilters({
 }
 
 export default MarketFilters;
-

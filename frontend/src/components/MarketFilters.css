@@ -14,10 +14,19 @@
   font-weight: 600;
 }
 
-.market-filter select,
-.market-filter input {
+.market-filter select {
   width: 100%;
   padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #1f2937;
+  outline: none;
+}
+
+.market-filter input {
+  width: 100%;
+  padding: 10px 36px 10px 12px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
   background: #ffffff;
@@ -45,10 +54,8 @@
   left: 0;
   right: 0;
   z-index: 10;
-
   max-height: 240px;
   overflow-y: auto;
-
   border: 1px solid #d1d5db;
   border-radius: 6px;
   background: #ffffff;
@@ -70,6 +77,23 @@
   background: #f3f4f6;
 }
 
+.municipality-clear {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  color: #6b7280;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.municipality-clear:hover {
+  color: #1f2937;
+}
+
 .market-analyze-button {
   padding: 10px 16px;
   border: 0;
@@ -83,4 +107,3 @@
 .market-analyze-button:hover {
   background: #374151;
 }
-

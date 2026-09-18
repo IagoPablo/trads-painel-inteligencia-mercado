@@ -2,6 +2,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Rectangle,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -14,9 +15,16 @@ import type { SortBy } from '../types/market-filters';
 interface MarketRankingProps {
   data: MarketData[];
   sortBy: SortBy;
+  selectedMunicipality: string;
+  onSelectMunicipality: (municipality: string) => void;
 }
 
-function MarketRanking({ data, sortBy }: MarketRankingProps) {
+function MarketRanking({
+  data,
+  sortBy,
+  selectedMunicipality,
+  onSelectMunicipality,
+}: MarketRankingProps) {
   const chartData = data
     .filter((item) =>
       sortBy === 'population'
@@ -24,8 +32,9 @@ function MarketRanking({ data, sortBy }: MarketRankingProps) {
         : item.householdIncome !== null,
     )
     .slice(0, 10)
-    .map((item) => ({
+    .map((item, index) => ({
       municipality: item.municipality,
+      label: `${index + 1}º ${item.municipality}`,
       value:
         sortBy === 'population'
           ? item.population ?? 0
@@ -37,8 +46,21 @@ function MarketRanking({ data, sortBy }: MarketRankingProps) {
       ? 'Ranking por população'
       : 'Ranking por renda média';
 
+  function handleBarClick(
+    _entry: unknown,
+    index: number,
+  ) {
+    const municipality = chartData[index]?.municipality;
+
+    if (!municipality) {
+      return;
+    }
+
+    onSelectMunicipality(municipality);
+  }
+
   return (
-    <section>
+    <section className="market-ranking">
       <h2>{title}</h2>
 
       <ResponsiveContainer width="100%" height={400}>
@@ -54,12 +76,10 @@ function MarketRanking({ data, sortBy }: MarketRankingProps) {
         >
           <CartesianGrid strokeDasharray="3 3" />
 
-          <XAxis
-            type="number"
-          />
+          <XAxis type="number" />
 
           <YAxis
-            dataKey="municipality"
+            dataKey="label"
             type="category"
             width={120}
           />
@@ -68,7 +88,19 @@ function MarketRanking({ data, sortBy }: MarketRankingProps) {
 
           <Bar
             dataKey="value"
-            fill="#2563eb"
+            onClick={handleBarClick}
+            cursor="pointer"
+            shape={(props) => {
+              const isSelected =
+                props.payload?.municipality === selectedMunicipality;
+
+              return (
+                <Rectangle
+                  {...props}
+                  fill={isSelected ? '#111827' : '#2563eb'}
+                />
+              );
+            }}
           />
         </BarChart>
       </ResponsiveContainer>

@@ -16,6 +16,7 @@ export interface MarketData {
   population: number | null;
   householdIncome: number | null;
   ageGroups: AgeGroups;
+  rankingPosition: number | null;
 }
 
 export interface MarketDataResponse {

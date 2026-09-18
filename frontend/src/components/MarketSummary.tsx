@@ -4,43 +4,67 @@ import type { AgeGroup } from '../types/market-filters';
 interface MarketSummaryProps {
   summary: MarketDataSummary;
   ageGroup: AgeGroup | '';
+  state: string;
+  municipality: string;
 }
 
 function MarketSummary({
   summary,
   ageGroup,
+  state,
+  municipality,
 }: MarketSummaryProps) {
   const ageGroupPopulation = ageGroup
     ? summary.ageGroups[ageGroup]
     : 0;
 
+  const isMunicipalitySelected = Boolean(municipality);
+
+  const locationName = municipality
+    ? municipality
+    : state
+      ? state
+      : 'Brasil';
+
   return (
-    <section>
-      <article>
-        <span>Municípios</span>
+    <section className="market-summary">
+      <article className="market-summary-card">
+        <span>
+          {isMunicipalitySelected
+            ? 'Mercado'
+            : 'Municípios'}
+        </span>
+
         <strong>
-          {summary.municipalities.toLocaleString('pt-BR')}
+          {isMunicipalitySelected
+            ? locationName
+            : summary.municipalities.toLocaleString('pt-BR')}
         </strong>
       </article>
 
-      <article>
+      <article className="market-summary-card">
         <span>População</span>
+
         <strong>
           {summary.population.toLocaleString('pt-BR')}
         </strong>
       </article>
 
-      <article>
+      <article className="market-summary-card">
         <span>Renda média</span>
+
         <strong>
-          {summary.averageHouseholdIncome.toLocaleString('pt-BR', {
-            style: 'currency',
-            currency: 'BRL',
-          })}
+          {summary.averageHouseholdIncome.toLocaleString(
+            'pt-BR',
+            {
+              style: 'currency',
+              currency: 'BRL',
+            },
+          )}
         </strong>
       </article>
 
-      <article>
+      <article className="market-summary-card">
         <span>
           {ageGroup
             ? `Público ${ageGroup} anos`
@@ -50,7 +74,7 @@ function MarketSummary({
         <strong>
           {ageGroup
             ? ageGroupPopulation.toLocaleString('pt-BR')
-            : 'Selecione um público'}
+            : 'Todos os públicos'}
         </strong>
       </article>
     </section>
