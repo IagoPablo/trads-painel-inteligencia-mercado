@@ -6,6 +6,7 @@ import { getMarketData } from '../services/market-data';
 import type { MarketData } from '../types/market-data';
 import type { MarketFilters as MarketFiltersState } from '../types/market-filters';
 import MarketRanking from '../components/MarketRanking';
+import AgeDistributionChart from '../components/AgeDistributionChart';
 
 const initialFilters: MarketFiltersState = {
   state: '',
@@ -65,8 +66,12 @@ function MarketDashboard() {
           />
 
             <MarketRanking
-            data={marketData}
-            sortBy={filters.sortBy}
+              data={marketData}
+              sortBy={filters.sortBy}
+            />
+            <AgeDistributionChart
+              data={marketData}
+              selectedAgeGroup={filters.ageGroup}
             />
         </>
       )}

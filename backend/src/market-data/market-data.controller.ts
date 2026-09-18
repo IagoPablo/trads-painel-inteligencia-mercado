@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Query } from '@nestjs/common';
 import { MarketDataService } from './market-data.service';
 import { FindMarketDataDto } from './dto/find-market-data.dto';
+import { MarketDataFiltersDto } from './dto/market-data-filters.dto';
 
 @Controller('market-data')
 export class MarketDataController {
@@ -24,6 +25,11 @@ export class MarketDataController {
   @Get('count')
   countIndicators() {
     return this.marketDataService.countIndicators();
+  }
+
+  @Get('summary')
+  getMarketDataSummary(@Query() filters: MarketDataFiltersDto) {
+    return this.marketDataService.getMarketDataSummary(filters);
   }
 
   @Get()

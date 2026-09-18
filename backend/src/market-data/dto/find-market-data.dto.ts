@@ -3,12 +3,11 @@ import {
   IsEnum,
   IsInt,
   IsOptional,
-  IsString,
-  Matches,
   Max,
   Min,
-  IsIn,
 } from 'class-validator';
+
+import { MarketDataFiltersDto } from './market-data-filters.dto';
 
 enum MarketDataSortBy {
   POPULATION = 'population',
@@ -20,25 +19,10 @@ enum SortOrder {
   DESC = 'desc',
 }
 
-export class FindMarketDataDto {
-  @IsOptional()
-  @IsString()
-  @Matches(/^[A-Za-z]{2}$/, {
-    message: 'state deve ser uma sigla de UF com 2 letras.',
-  })
-
-  @Transform(({ value }) =>
-    typeof value === 'string' ? value.toUpperCase() : value,
-  )
-  state?: string;
-
-  @IsOptional()
-  @IsString()
-  municipality?: string;
-
+export class FindMarketDataDto extends MarketDataFiltersDto {
   @IsOptional()
   @IsEnum(MarketDataSortBy, {
-  message: 'sortBy deve ser "population" ou "householdIncome".',
+    message: 'sortBy deve ser "population" ou "householdIncome".',
   })
   sortBy?: MarketDataSortBy;
 
@@ -60,19 +44,4 @@ export class FindMarketDataDto {
   @Min(1)
   @Max(100)
   limit?: number;
-
-  @IsOptional()
-    @IsIn([
-    '0-14',
-    '15-24',
-    '25-34',
-    '35-44',
-    '45-54',
-    '55-64',
-    '65+',
-    ], {
-    message:
-        'ageGroup deve ser uma das faixas: 0-14, 15-24, 25-34, 35-44, 45-54, 55-64 ou 65+.',
-    })
-    ageGroup?: string;
 }

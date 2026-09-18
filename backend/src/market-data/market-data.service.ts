@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { IbgeService } from '../ibge/ibge.service';
 import { FindMarketDataDto } from './dto/find-market-data.dto';
+import { MarketDataFiltersDto } from './dto/market-data-filters.dto';
 
 @Injectable()
 export class MarketDataService {
@@ -420,29 +421,33 @@ async syncHouseholdIncome(referencePeriod: number) {
     return this.prisma.marketIndicator.count();
  }
 
-  async findMarketData(filters: FindMarketDataDto) {
-  const stateCode = filters.state
-    ? this.stateCodes[filters.state.toUpperCase()]
-    : undefined;
+  private buildLocationWhere(filters: MarketDataFiltersDto) {
+    const stateCode = filters.state
+      ? this.stateCodes[filters.state.toUpperCase()]
+      : undefined;
 
+    return {
+      type: 'MUNICIPALITY' as const,
+      name: filters.municipality
+        ? {
+            equals: filters.municipality,
+            mode: 'insensitive' as const,
+          }
+        : undefined,
+      parent: stateCode
+        ? {
+            ibgeCode: stateCode,
+          }
+        : undefined,
+    };
+  }
+
+  async findMarketData(filters: FindMarketDataDto) {
   const page = filters.page ?? 1;
   const limit = filters.limit ?? 20;
   const skip = (page - 1) * limit;
 
-  const locationWhere = {
-    type: 'MUNICIPALITY' as const,
-    name: filters.municipality
-      ? {
-          equals: filters.municipality,
-          mode: 'insensitive' as const,
-        }
-      : undefined,
-    parent: stateCode
-      ? {
-          ibgeCode: stateCode,
-        }
-      : undefined,
-  };
+  const locationWhere = this.buildLocationWhere(filters);
 
   const sortIndicator =
   filters.sortBy === 'householdIncome'
@@ -552,4 +557,94 @@ async syncHouseholdIncome(referencePeriod: number) {
     },
   };
  }
+  async getMarketDataSummary(filters: MarketDataFiltersDto) {
+    const locationWhere = this.buildLocationWhere(filters);
+
+    const locations = await this.prisma.location.findMany({
+      where: locationWhere,
+      select: {
+        id: true,
+      },
+    });
+
+    const locationIds = locations.map((location) => location.id);
+
+    if (locationIds.length === 0) {
+      return {
+        municipalities: 0,
+        population: 0,
+        averageHouseholdIncome: 0,
+        ageGroups: {
+          '0-14': 0,
+          '15-24': 0,
+          '25-34': 0,
+          '35-44': 0,
+          '45-54': 0,
+          '55-64': 0,
+          '65+': 0,
+        },
+      };
+    }
+
+    const indicators = await this.prisma.marketIndicator.findMany({
+      where: {
+        locationId: {
+          in: locationIds,
+        },
+        indicator: {
+          in: ['POPULATION', 'HOUSEHOLD_INCOME', 'AGE_GROUP'],
+        },
+        referencePeriod: 2022,
+      },
+    });
+
+    let population = 0;
+    let householdIncomeTotal = 0;
+    let householdIncomeCount = 0;
+
+    const ageGroups = {
+      '0-14': 0,
+      '15-24': 0,
+      '25-34': 0,
+      '35-44': 0,
+      '45-54': 0,
+      '55-64': 0,
+      '65+': 0,
+    };
+
+    for (const indicator of indicators) {
+      const value = Number(indicator.value);
+
+      if (!Number.isFinite(value)) {
+        continue;
+      }
+
+      if (indicator.indicator === 'POPULATION') {
+        population += value;
+      }
+
+      if (indicator.indicator === 'HOUSEHOLD_INCOME') {
+        householdIncomeTotal += value;
+        householdIncomeCount++;
+      }
+
+      if (
+        indicator.indicator === 'AGE_GROUP' &&
+        indicator.dimension &&
+        indicator.dimension in ageGroups
+      ) {
+        ageGroups[indicator.dimension as keyof typeof ageGroups] += value;
+      }
+    }
+
+    return {
+      municipalities: locationIds.length,
+      population,
+      averageHouseholdIncome:
+        householdIncomeCount > 0
+          ? householdIncomeTotal / householdIncomeCount
+          : 0,
+      ageGroups,
+    };
+  }
 }
