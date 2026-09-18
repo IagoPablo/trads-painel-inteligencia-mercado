@@ -5,16 +5,17 @@ import MarketSummary from '../components/MarketSummary';
 import MarketRanking from '../components/MarketRanking';
 import AgeDistributionChart from '../components/AgeDistributionChart';
 
+import { getMunicipalities } from '../services/locations';
 import {
   getMarketData,
   getMarketDataSummary,
 } from '../services/market-data';
 
+import type { Municipality } from '../types/location';
 import type {
   MarketData,
   MarketDataSummary,
 } from '../types/market-data';
-
 import type {
   MarketFilters as MarketFiltersState,
 } from '../types/market-filters';
@@ -33,6 +34,9 @@ function MarketDashboard() {
 
   const [marketSummary, setMarketSummary] =
     useState<MarketDataSummary | null>(null);
+
+  const [municipalities, setMunicipalities] =
+    useState<Municipality[]>([]);
 
   const [filters, setFilters] =
     useState<MarketFiltersState>(initialFilters);
@@ -74,6 +78,30 @@ function MarketDashboard() {
     loadMarketData();
   }, [filters]);
 
+  useEffect(() => {
+    async function loadMunicipalities() {
+      if (!filters.state) {
+        setMunicipalities([]);
+        return;
+      }
+
+      try {
+        const data = await getMunicipalities(filters.state);
+
+        setMunicipalities(data);
+      } catch (error) {
+        console.error(
+          'Erro ao carregar municípios:',
+          error,
+        );
+
+        setMunicipalities([]);
+      }
+    }
+
+    loadMunicipalities();
+  }, [filters.state]);
+
   return (
     <main>
       <h1>Painel de Inteligência de Mercado</h1>
@@ -84,6 +112,7 @@ function MarketDashboard() {
 
       <MarketFilters
         filters={filters}
+        municipalities={municipalities}
         onChange={setFilters}
       />
 

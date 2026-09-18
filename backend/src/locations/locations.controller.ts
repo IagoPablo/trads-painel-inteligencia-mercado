@@ -20,4 +20,9 @@ export class LocationsController {
     return this.locationsService.syncLocations();
   }
   
+  @Get('municipalities')
+  getMunicipalities(@Query('state') state?: string) {
+    return this.locationsService.getMunicipalities(state);
+  }
+  
 }

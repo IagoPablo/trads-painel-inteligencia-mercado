@@ -3,38 +3,10 @@ import { PrismaService } from '../database/prisma.service';
 import { IbgeService } from '../ibge/ibge.service';
 import { FindMarketDataDto } from './dto/find-market-data.dto';
 import { MarketDataFiltersDto } from './dto/market-data-filters.dto';
+import { STATE_CODES } from '../common/constants/state-codes';
 
 @Injectable()
 export class MarketDataService {
-  private readonly stateCodes: Record<string, string> = {
-    AC: '12',
-    AL: '27',
-    AP: '16',
-    AM: '13',
-    BA: '29',
-    CE: '23',
-    DF: '53',
-    ES: '32',
-    GO: '52',
-    MA: '21',
-    MT: '51',
-    MS: '50',
-    MG: '31',
-    PA: '15',
-    PB: '25',
-    PR: '41',
-    PE: '26',
-    PI: '22',
-    RJ: '33',
-    RN: '24',
-    RS: '43',
-    RO: '11',
-    RR: '14',
-    SC: '42',
-    SP: '35',
-    SE: '28',
-    TO: '17',
-    };
   constructor(
     private readonly prisma: PrismaService,
     private readonly ibgeService: IbgeService,
@@ -425,7 +397,7 @@ async syncHouseholdIncome(referencePeriod: number) {
   const state = filters.state?.toUpperCase();
 
     const stateCode = state
-      ? this.stateCodes[state]
+      ? STATE_CODES[state]
       : undefined;
 
     if (state && !stateCode) {

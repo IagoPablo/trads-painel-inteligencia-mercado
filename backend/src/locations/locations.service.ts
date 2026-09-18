@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { IbgeService } from '../ibge/ibge.service';
+import { STATE_CODES } from '../common/constants/state-codes';
 
 @Injectable()
 export class LocationsService {
@@ -12,6 +13,26 @@ export class LocationsService {
   async countLocations() {
     return this.prisma.location.count();
   }
+
+  async getMunicipalities(state?: string) {
+  return this.prisma.location.findMany({
+    where: {
+      type: 'MUNICIPALITY',
+      parent: state
+        ? {
+            ibgeCode: STATE_CODES[state.toUpperCase()],
+          }
+        : undefined,
+    },
+    select: {
+      ibgeCode: true,
+      name: true,
+    },
+    orderBy: {
+      name: 'asc',
+    },
+  });
+}
 
   async findMunicipality(name: string) {
     return this.prisma.location.findFirst({
