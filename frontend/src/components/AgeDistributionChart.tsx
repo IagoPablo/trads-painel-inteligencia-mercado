@@ -41,7 +41,7 @@ function AgeDistributionChart({
 
   return (
     <section>
-      <h2>Distribuição por faixa etária</h2>
+      <h2>Distribuição por Público</h2>
 
       <ResponsiveContainer width="100%" height={400}>
         <BarChart

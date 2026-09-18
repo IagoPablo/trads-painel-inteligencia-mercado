@@ -11,8 +11,8 @@ function MarketSummary({
   ageGroup,
 }: MarketSummaryProps) {
   const ageGroupPopulation = ageGroup
-  ? summary.ageGroups[ageGroup]
-  : 0;
+    ? summary.ageGroups[ageGroup]
+    : 0;
 
   return (
     <section>
@@ -44,13 +44,13 @@ function MarketSummary({
         <span>
           {ageGroup
             ? `Público ${ageGroup} anos`
-            : 'Faixa etária'}
+            : 'Público'}
         </span>
 
         <strong>
           {ageGroup
             ? ageGroupPopulation.toLocaleString('pt-BR')
-            : 'Selecione uma faixa'}
+            : 'Selecione um público'}
         </strong>
       </article>
     </section>

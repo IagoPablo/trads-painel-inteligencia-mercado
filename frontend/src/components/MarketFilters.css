@@ -1,0 +1,86 @@
+.market-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.market-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.market-filter label {
+  font-weight: 600;
+}
+
+.market-filter select,
+.market-filter input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #1f2937;
+  outline: none;
+}
+
+.market-filter select:focus,
+.market-filter input:focus {
+  border-color: #6b7280;
+}
+
+.market-filter input:disabled {
+  background: #f3f4f6;
+  cursor: not-allowed;
+}
+
+.municipality-autocomplete {
+  position: relative;
+}
+
+.municipality-options {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 10;
+
+  max-height: 240px;
+  overflow-y: auto;
+
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.municipality-option {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  background: transparent;
+  color: #1f2937;
+  text-align: left;
+  cursor: pointer;
+}
+
+.municipality-option:hover {
+  background: #f3f4f6;
+}
+
+.market-analyze-button {
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 6px;
+  background: #1f2937;
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.market-analyze-button:hover {
+  background: #374151;
+}
+

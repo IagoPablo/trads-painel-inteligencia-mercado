@@ -1,14 +1,13 @@
-import type {
-  MarketFilters as MarketFiltersState,
-  AgeGroup,
-} from '../types/market-filters';
-
+import { useState } from 'react';
+import type {MarketFilters as MarketFiltersState, AgeGroup,} from '../types/market-filters';
 import type { Municipality } from '../types/location';
+import './MarketFilters.css';
 
 interface MarketFiltersProps {
   filters: MarketFiltersState;
   municipalities: Municipality[];
   onChange: (filters: MarketFiltersState) => void;
+  onAnalyze: () => void;
 }
 
 const ageGroups: AgeGroup[] = [
@@ -25,7 +24,11 @@ function MarketFilters({
   filters,
   municipalities,
   onChange,
+  onAnalyze,
 }: MarketFiltersProps) {
+  const [municipalitySearch, setMunicipalitySearch] =
+    useState(filters.municipality);
+
   function updateFilter<K extends keyof MarketFiltersState>(
     field: K,
     value: MarketFiltersState[K],
@@ -36,9 +39,9 @@ function MarketFilters({
     });
   }
 
-  function handleStateChange(
-    state: string,
-  ) {
+  function handleStateChange(state: string) {
+    setMunicipalitySearch('');
+
     onChange({
       ...filters,
       state,
@@ -46,14 +49,52 @@ function MarketFilters({
     });
   }
 
+  function handleMunicipalitySearch(value: string) {
+    setMunicipalitySearch(value);
+
+    onChange({
+      ...filters,
+      municipality: '',
+    });
+  }
+
+  function handleMunicipalitySelect(
+    municipality: Municipality,
+  ) {
+    setMunicipalitySearch(municipality.name);
+
+    updateFilter(
+      'municipality',
+      municipality.name,
+    );
+  }
+
+  const filteredMunicipalities =
+    municipalitySearch.trim()
+      ? municipalities
+          .filter((municipality) =>
+            municipality.name
+              .toLocaleLowerCase('pt-BR')
+              .includes(
+                municipalitySearch
+                  .trim()
+                  .toLocaleLowerCase('pt-BR'),
+              ),
+          )
+          .slice(0, 20)
+      : [];
+
   return (
-    <section>
+    <section className="market-filters">
       <h2>Filtros</h2>
 
-      <label>
-        Estado
+      <div className="market-filter">
+        <label htmlFor="state">
+          Estado
+        </label>
 
         <select
+          id="state"
           value={filters.state}
           onChange={(event) =>
             handleStateChange(event.target.value)
@@ -91,45 +132,64 @@ function MarketFilters({
           <option value="SE">Sergipe</option>
           <option value="TO">Tocantins</option>
         </select>
-      </label>
+      </div>
 
-      <label>
-        Município
+      <div className="market-filter">
+        <label htmlFor="municipality">
+          Município
+        </label>
+
+        <div className="municipality-autocomplete">
+          <input
+            id="municipality"
+            type="text"
+            value={municipalitySearch}
+            disabled={
+              !filters.state ||
+              municipalities.length === 0
+            }
+            placeholder={
+              filters.state
+                ? 'Digite o nome do município'
+                : 'Selecione um estado primeiro'
+            }
+            onChange={(event) =>
+              handleMunicipalitySearch(
+                event.target.value,
+              )
+            }
+          />
+
+          {filteredMunicipalities.length > 0 && (
+            <div className="municipality-options">
+              {filteredMunicipalities.map(
+                (municipality) => (
+                  <button
+                    key={municipality.ibgeCode}
+                    type="button"
+                    className="municipality-option"
+                    onClick={() =>
+                      handleMunicipalitySelect(
+                        municipality,
+                      )
+                    }
+                  >
+                    {municipality.name}
+                  </button>
+                ),
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="market-filter">
+        <label htmlFor="age-group">
+          Público
+        </label>
 
         <select
-          value={filters.municipality}
-          disabled={
-            !filters.state ||
-            municipalities.length === 0
-          }
-          onChange={(event) =>
-            updateFilter(
-              'municipality',
-              event.target.value,
-            )
-          }
-        >
-          <option value="">
-            {filters.state
-              ? 'Todos os municípios'
-              : 'Selecione um estado primeiro'}
-          </option>
-
-          {municipalities.map((municipality) => (
-            <option
-              key={municipality.ibgeCode}
-              value={municipality.name}
-            >
-              {municipality.name}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <label>
-        Faixa etária
-
-        <select
+          id="age-group"
           value={filters.ageGroup}
           onChange={(event) =>
             updateFilter(
@@ -139,7 +199,7 @@ function MarketFilters({
           }
         >
           <option value="">
-            Todas as faixas
+            Todos os Públicos
           </option>
 
           {ageGroups.map((ageGroup) => (
@@ -151,12 +211,15 @@ function MarketFilters({
             </option>
           ))}
         </select>
-      </label>
+      </div>
 
-      <label>
-        Ordenar por
+      <div className="market-filter">
+        <label htmlFor="sort-by">
+          Ordenar por
+        </label>
 
         <select
+          id="sort-by"
           value={filters.sortBy}
           onChange={(event) =>
             updateFilter(
@@ -173,12 +236,15 @@ function MarketFilters({
             Renda
           </option>
         </select>
-      </label>
+      </div>
 
-      <label>
-        Ordem
+      <div className="market-filter">
+        <label htmlFor="order">
+          Ordem
+        </label>
 
         <select
+          id="order"
           value={filters.order}
           onChange={(event) =>
             updateFilter(
@@ -195,9 +261,18 @@ function MarketFilters({
             Menor para maior
           </option>
         </select>
-      </label>
+      </div>
+
+      <button
+        type="button"
+        className="market-analyze-button"
+        onClick={onAnalyze}
+      >
+        Analisar
+      </button>
     </section>
   );
 }
 
 export default MarketFilters;
+

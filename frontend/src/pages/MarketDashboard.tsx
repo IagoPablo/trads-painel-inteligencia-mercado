@@ -40,6 +40,9 @@ function MarketDashboard() {
 
   const [filters, setFilters] =
     useState<MarketFiltersState>(initialFilters);
+  
+  const [appliedFilters, setAppliedFilters] =
+    useState<MarketFiltersState>(initialFilters);
 
   const [error, setError] =
     useState<string | null>(null);
@@ -48,35 +51,35 @@ function MarketDashboard() {
     useState(true);
 
   useEffect(() => {
-    async function loadMarketData() {
-      try {
-        setIsLoading(true);
-        setError(null);
+  async function loadMarketData() {
+    try {
+      setIsLoading(true);
+      setError(null);
 
-        const [marketResponse, summaryResponse] =
-          await Promise.all([
-            getMarketData(filters),
-            getMarketDataSummary(filters),
-          ]);
+      const [marketResponse, summaryResponse] =
+        await Promise.all([
+          getMarketData(appliedFilters),
+          getMarketDataSummary(appliedFilters),
+        ]);
 
-        setMarketData(marketResponse.data);
-        setMarketSummary(summaryResponse);
-      } catch (error) {
-        console.error(
-          'Erro ao carregar dados de mercado:',
-          error,
-        );
+      setMarketData(marketResponse.data);
+      setMarketSummary(summaryResponse);
+    } catch (error) {
+      console.error(
+        'Erro ao carregar dados de mercado:',
+        error,
+      );
 
-        setError(
-          'Não foi possível carregar os dados de mercado.',
-        );
-      } finally {
-        setIsLoading(false);
-      }
+      setError(
+        'Não foi possível carregar os dados de mercado.',
+      );
+    } finally {
+      setIsLoading(false);
     }
+  }
 
     loadMarketData();
-  }, [filters]);
+  }, [appliedFilters]);
 
   useEffect(() => {
     async function loadMunicipalities() {
@@ -114,6 +117,7 @@ function MarketDashboard() {
         filters={filters}
         municipalities={municipalities}
         onChange={setFilters}
+        onAnalyze={() => setAppliedFilters(filters)}
       />
 
       {isLoading && (
@@ -129,18 +133,18 @@ function MarketDashboard() {
           {marketSummary && (
             <MarketSummary
               summary={marketSummary}
-              ageGroup={filters.ageGroup}
+              ageGroup={appliedFilters.ageGroup}
             />
           )}
 
           <MarketRanking
             data={marketData}
-            sortBy={filters.sortBy}
+            sortBy={appliedFilters.sortBy}
           />
 
           <AgeDistributionChart
             data={marketData}
-            selectedAgeGroup={filters.ageGroup}
+            selectedAgeGroup={appliedFilters.ageGroup}
           />
         </>
       )}
