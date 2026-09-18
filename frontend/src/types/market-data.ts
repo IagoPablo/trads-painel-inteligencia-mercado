@@ -27,3 +27,9 @@ export interface MarketDataResponse {
     totalPages: number;
   };
 }
+export interface MarketDataSummary {
+  municipalities: number;
+  population: number;
+  averageHouseholdIncome: number;
+  ageGroups: AgeGroups;
+}

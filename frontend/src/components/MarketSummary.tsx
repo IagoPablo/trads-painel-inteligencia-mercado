@@ -1,45 +1,39 @@
-import type { MarketData } from '../types/market-data';
+import type { MarketDataSummary } from '../types/market-data';
 import type { AgeGroup } from '../types/market-filters';
 
 interface MarketSummaryProps {
-  data: MarketData[];
+  summary: MarketDataSummary;
   ageGroup: AgeGroup | '';
 }
 
-function MarketSummary({ data, ageGroup }: MarketSummaryProps) {
-  const population = data.reduce(
-    (total, item) => total + (item.population ?? 0),
-    0,
-  );
-
-  const incomeValues = data
-    .map((item) => item.householdIncome)
-    .filter((value): value is number => value !== null);
-
-  const averageIncome =
-    incomeValues.length > 0
-      ? incomeValues.reduce((total, value) => total + value, 0) /
-        incomeValues.length
-      : 0;
-
+function MarketSummary({
+  summary,
+  ageGroup,
+}: MarketSummaryProps) {
   const ageGroupPopulation = ageGroup
-    ? data.reduce(
-        (total, item) => total + (item.ageGroups[ageGroup] ?? 0),
-        0,
-      )
-    : null;
+  ? summary.ageGroups[ageGroup]
+  : 0;
 
   return (
     <section>
       <article>
+        <span>Municípios</span>
+        <strong>
+          {summary.municipalities.toLocaleString('pt-BR')}
+        </strong>
+      </article>
+
+      <article>
         <span>População</span>
-        <strong>{population.toLocaleString('pt-BR')}</strong>
+        <strong>
+          {summary.population.toLocaleString('pt-BR')}
+        </strong>
       </article>
 
       <article>
         <span>Renda média</span>
         <strong>
-          {averageIncome.toLocaleString('pt-BR', {
+          {summary.averageHouseholdIncome.toLocaleString('pt-BR', {
             style: 'currency',
             currency: 'BRL',
           })}
@@ -48,12 +42,14 @@ function MarketSummary({ data, ageGroup }: MarketSummaryProps) {
 
       <article>
         <span>
-          {ageGroup ? `Público ${ageGroup} anos` : 'Faixa etária'}
+          {ageGroup
+            ? `Público ${ageGroup} anos`
+            : 'Faixa etária'}
         </span>
 
         <strong>
           {ageGroup
-            ? ageGroupPopulation?.toLocaleString('pt-BR')
+            ? ageGroupPopulation.toLocaleString('pt-BR')
             : 'Selecione uma faixa'}
         </strong>
       </article>

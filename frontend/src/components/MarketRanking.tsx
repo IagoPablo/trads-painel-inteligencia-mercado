@@ -23,6 +23,7 @@ function MarketRanking({ data, sortBy }: MarketRankingProps) {
         ? item.population !== null
         : item.householdIncome !== null,
     )
+    .slice(0, 10)
     .map((item) => ({
       municipality: item.municipality,
       value:

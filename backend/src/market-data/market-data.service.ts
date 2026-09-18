@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { IbgeService } from '../ibge/ibge.service';
 import { FindMarketDataDto } from './dto/find-market-data.dto';
@@ -422,9 +422,17 @@ async syncHouseholdIncome(referencePeriod: number) {
  }
 
   private buildLocationWhere(filters: MarketDataFiltersDto) {
-    const stateCode = filters.state
-      ? this.stateCodes[filters.state.toUpperCase()]
+  const state = filters.state?.toUpperCase();
+
+    const stateCode = state
+      ? this.stateCodes[state]
       : undefined;
+
+    if (state && !stateCode) {
+      throw new BadRequestException(
+        `UF inválida: ${state}. Informe uma UF válida do Brasil.`,
+      );
+    }
 
     return {
       type: 'MUNICIPALITY' as const,

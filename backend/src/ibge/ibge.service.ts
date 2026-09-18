@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import {Injectable, ServiceUnavailableException,} from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 
@@ -89,12 +89,17 @@ export class IbgeService {
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
       const response = await firstValueFrom(
-        this.httpService.get(url),
+        this.httpService.get(url, {
+          timeout: 10000,
+        }),
       );
 
       return response.data;
     } catch (error) {
-      lastError = error;
+      console.error(
+        `Erro ao consultar grupos etários no IBGE. Tentativa ${attempt}/3.`,
+        error,
+      );
 
       if (attempt < 3) {
         await new Promise((resolve) =>
@@ -104,6 +109,8 @@ export class IbgeService {
     }
   }
 
-  throw lastError;
-}
+  throw new ServiceUnavailableException(
+    'Não foi possível consultar os dados de faixa etária do IBGE após 3 tentativas.',
+  );
+ }
 }
