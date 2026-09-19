@@ -8,5 +8,6 @@ import { MarketDataService } from './market-data.service';
   imports: [IbgeModule, DatabaseModule],
   controllers: [MarketDataController],
   providers: [MarketDataService],
+  exports: [MarketDataService],
 })
 export class MarketDataModule {}

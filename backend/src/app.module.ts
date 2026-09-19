@@ -6,6 +6,7 @@ import { IbgeModule } from './ibge/ibge.module';
 import { DatabaseModule } from './database/database.module';
 import { LocationsModule } from './locations/locations.module';
 import { MarketDataModule } from './market-data/market-data.module';
+import { DataSyncModule } from './data-sync/data-sync.module';
 
 @Module({
   imports: [ConfigModule.forRoot({
@@ -15,6 +16,7 @@ import { MarketDataModule } from './market-data/market-data.module';
     IbgeModule, 
     LocationsModule,
     MarketDataModule,
+    DataSyncModule,
   ],
   controllers: [AppController],
   providers: [AppService],
