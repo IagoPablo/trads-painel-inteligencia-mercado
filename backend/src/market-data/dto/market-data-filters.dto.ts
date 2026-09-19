@@ -1,10 +1,10 @@
-import { Transform } from 'class-transformer';
 import {
   IsIn,
   IsOptional,
   IsString,
   Matches,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class MarketDataFiltersDto {
   @IsOptional()

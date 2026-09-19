@@ -1,4 +1,3 @@
-import { Transform } from 'class-transformer';
 import {
   IsEnum,
   IsInt,
@@ -6,15 +5,15 @@ import {
   Max,
   Min,
 } from 'class-validator';
-
+import { Transform } from 'class-transformer';
 import { MarketDataFiltersDto } from './market-data-filters.dto';
 
-enum MarketDataSortBy {
+ export enum MarketDataSortBy {
   POPULATION = 'population',
   HOUSEHOLD_INCOME = 'householdIncome',
 }
 
-enum SortOrder {
+ export enum SortOrder {
   ASC = 'asc',
   DESC = 'desc',
 }
