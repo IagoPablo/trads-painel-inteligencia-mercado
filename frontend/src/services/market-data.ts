@@ -3,7 +3,7 @@ import type { MarketDataResponse, MarketDataSummary} from '../types/market-data'
 import type { MarketFilters } from '../types/market-filters';
 
 const api = axios.create({
-  baseURL: 'http://localhost:3000',
+  baseURL: import.meta.env.VITE_API_URL,
 });
 
 export async function getMarketData(
