@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+
 import { PrismaService } from '../database/prisma.service';
 import { IbgeService } from '../ibge/ibge.service';
 import { STATE_CODES } from '../common/constants/state-codes';
@@ -121,5 +122,46 @@ export class LocationsService {
       states: states.length,
       municipalities: municipalitiesCount,
     };
+  }
+    async findMunicipalityByAnsCode(
+      ansCode: string,
+      stateCode: string,
+    ) {
+      return this.prisma.location.findFirst({
+        where: {
+          type: 'MUNICIPALITY',
+          ibgeCode: {
+            startsWith: ansCode,
+          },
+          parent: {
+            ibgeCode: stateCode,
+            type: 'STATE',
+          },
+        },
+        select: {
+          id: true,
+          ibgeCode: true,
+          name: true,
+          parentId: true,
+        },
+    });
+  }
+  
+  async getMunicipalitiesForAnsMapping() {
+    return this.prisma.location.findMany({
+      where: {
+        type: 'MUNICIPALITY',
+      },
+      select: {
+        id: true,
+        ibgeCode: true,
+        name: true,
+        parent: {
+          select: {
+            ibgeCode: true,
+          },
+        },
+      },
+    });
   }
 }

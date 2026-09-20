@@ -24,5 +24,4 @@ export class LocationsController {
   getMunicipalities(@Query('state') state?: string) {
     return this.locationsService.getMunicipalities(state);
   }
-  
 }
