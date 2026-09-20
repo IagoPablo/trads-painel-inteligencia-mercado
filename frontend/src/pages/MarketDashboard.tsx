@@ -20,8 +20,13 @@ import type {
 } from "../types/market-data";
 
 import type { Municipality } from "../types/location";
-import type { MarketFilters as MarketFiltersState } from "../types/market-filters";
+import type {
+  AgeGroup,
+  MarketFilters as MarketFiltersState,
+} from "../types/market-filters";
+
 import "./MarketDashboard.css";
+
 import MarketRankingPosition from "../components/MarketRankingPosition";
 import MarketAnalysisSummary from "../components/MarketAnalysisSummary";
 
@@ -106,7 +111,7 @@ function MarketDashboard() {
     }
 
     loadMarketData();
-  }, [appliedFilters]);
+  }, [appliedFilters, municipalities]);
 
   useEffect(() => {
     async function loadMunicipalities() {
@@ -128,6 +133,13 @@ function MarketDashboard() {
 
     loadMunicipalities();
   }, [filters.state]);
+
+  const selectedAgeGroup = appliedFilters.ageGroup as AgeGroup | "";
+
+  const selectedAgeGroupPopulation =
+    marketSummary && selectedAgeGroup
+      ? marketSummary.ageGroups[selectedAgeGroup]
+      : null;
 
   return (
     <main className="market-dashboard">
@@ -158,15 +170,21 @@ function MarketDashboard() {
 
       {!isLoading && !error && (
         <div className="dashboard-content">
-          {marketAnalysis && <MarketAnalysisSummary data={marketAnalysis} />}
-
-          {marketSummary && (
-            <MarketSummary
-              summary={marketSummary}
-              ageGroup={appliedFilters.ageGroup}
-              state={appliedFilters.state}
-              municipality={appliedFilters.municipality}
+          {marketAnalysis ? (
+            <MarketAnalysisSummary
+              data={marketAnalysis}
+              ageGroup={selectedAgeGroup}
+              ageGroupPopulation={selectedAgeGroupPopulation}
             />
+          ) : (
+            marketSummary && (
+              <MarketSummary
+                summary={marketSummary}
+                ageGroup={appliedFilters.ageGroup}
+                state={appliedFilters.state}
+                municipality={appliedFilters.municipality}
+              />
+            )
           )}
 
           <div className="dashboard-charts">
@@ -199,10 +217,7 @@ function MarketDashboard() {
 
             {marketAnalysis && (
               <>
-                <PopulationAgeChart
-                  data={marketAnalysis}
-                  selectedAgeGroup={appliedFilters.ageGroup}
-                />
+                <PopulationAgeChart data={marketAnalysis} />
 
                 <AnsAgeDistributionChart data={marketAnalysis} />
               </>

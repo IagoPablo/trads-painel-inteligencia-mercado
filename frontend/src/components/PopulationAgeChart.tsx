@@ -9,18 +9,15 @@ import {
 } from "recharts";
 
 import type { MarketAnalysis } from "../types/market-data";
-import type { AgeGroup } from "../types/market-filters";
 
 interface PopulationAgeChartProps {
   data: MarketAnalysis;
-  selectedAgeGroup: AgeGroup | "";
 }
 
 function PopulationAgeChart({
   data,
-  selectedAgeGroup,
 }: PopulationAgeChartProps) {
-  const ageGroups: AgeGroup[] = [
+  const ageGroups = [
     "0-14",
     "15-24",
     "25-34",
@@ -28,7 +25,7 @@ function PopulationAgeChart({
     "45-54",
     "55-64",
     "65+",
-  ];
+  ] as const;
 
   const chartData = ageGroups.map((ageGroup) => ({
     ageGroup,

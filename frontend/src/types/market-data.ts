@@ -68,4 +68,25 @@ export interface MarketAnalysis {
     };
     ageGroups: Record<string, AnsAgeGroup>;
   };
+  insights: {
+    largestPopulationAgeGroup: {
+      ageGroup: string;
+      population: number;
+    };
+
+    largestBeneficiaryAgeGroup: {
+      ageGroup: string;
+      beneficiaries: number;
+    } | null;
+
+    largestMedicalAgeGroup: {
+      ageGroup: string;
+      beneficiaries: number;
+    } | null;
+
+    largestDentalAgeGroup: {
+      ageGroup: string;
+      beneficiaries: number;
+    } | null;
+  };
 }

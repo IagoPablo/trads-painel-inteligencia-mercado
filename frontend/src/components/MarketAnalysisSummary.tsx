@@ -1,11 +1,18 @@
 import type { MarketAnalysis } from "../types/market-data";
+import type { AgeGroup } from "../types/market-filters";
 
 interface MarketAnalysisSummaryProps {
   data: MarketAnalysis;
+  ageGroup: AgeGroup | "";
+  ageGroupPopulation: number | null;
 }
 
-function MarketAnalysisSummary({ data }: MarketAnalysisSummaryProps) {
-  const { municipality, ibge, ans } = data;
+function MarketAnalysisSummary({
+  data,
+  ageGroup,
+  ageGroupPopulation,
+}: MarketAnalysisSummaryProps) {
+  const { municipality, ibge, ans, insights } = data;
 
   return (
     <section className="market-analysis-summary">
@@ -47,6 +54,74 @@ function MarketAnalysisSummary({ data }: MarketAnalysisSummaryProps) {
           <strong>{ans.beneficiaries.dental.toLocaleString("pt-BR")}</strong>
           <small>ANS · {ans.referencePeriod}</small>
         </article>
+      </div>
+
+      <div className="market-analysis-insights">
+        <h3>Principais concentrações</h3>
+
+        <div className="market-analysis-insight-grid">
+          <article className="analysis-insight">
+            <span>Maior faixa populacional</span>
+            <strong>{insights.largestPopulationAgeGroup.ageGroup}</strong>
+            <small>
+              {insights.largestPopulationAgeGroup.population.toLocaleString(
+                "pt-BR",
+              )}{" "}
+              pessoas · IBGE
+            </small>
+          </article>
+
+          <article className="analysis-insight">
+            <span>Maior faixa de beneficiários</span>
+            <strong>
+              {insights.largestBeneficiaryAgeGroup?.ageGroup ?? "—"}
+            </strong>
+            <small>
+              {insights.largestBeneficiaryAgeGroup
+                ? `${insights.largestBeneficiaryAgeGroup.beneficiaries.toLocaleString(
+                    "pt-BR",
+                  )} beneficiários · ANS`
+                : "Dados indisponíveis"}
+            </small>
+          </article>
+
+          <article className="analysis-insight">
+            <span>Maior faixa médica</span>
+            <strong>{insights.largestMedicalAgeGroup?.ageGroup ?? "—"}</strong>
+            <small>
+              {insights.largestMedicalAgeGroup
+                ? `${insights.largestMedicalAgeGroup.beneficiaries.toLocaleString(
+                    "pt-BR",
+                  )} beneficiários · ANS`
+                : "Dados indisponíveis"}
+            </small>
+          </article>
+
+          <article className="analysis-insight">
+            <span>Maior faixa odontológica</span>
+            <strong>{insights.largestDentalAgeGroup?.ageGroup ?? "—"}</strong>
+            <small>
+              {insights.largestDentalAgeGroup
+                ? `${insights.largestDentalAgeGroup.beneficiaries.toLocaleString(
+                    "pt-BR",
+                  )} beneficiários · ANS`
+                : "Dados indisponíveis"}
+            </small>
+          </article>
+          <article className="analysis-card">
+            <span>
+              {ageGroup ? `População ${ageGroup} anos` : "População por faixa"}
+            </span>
+
+            <strong>
+              {ageGroup && ageGroupPopulation !== null
+                ? ageGroupPopulation.toLocaleString("pt-BR")
+                : "Todas as faixas"}
+            </strong>
+
+            <small>IBGE · {ibge.referencePeriod}</small>
+          </article>
+        </div>
       </div>
     </section>
   );
