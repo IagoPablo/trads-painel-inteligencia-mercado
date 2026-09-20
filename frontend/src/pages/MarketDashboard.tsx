@@ -1,48 +1,61 @@
-import { useEffect, useState, } from 'react';
-import MarketFilters from '../components/MarketFilters';
-import MarketSummary from '../components/MarketSummary';
-import MarketRanking from '../components/MarketRanking';
-import AgeDistributionChart from '../components/AgeDistributionChart';
-import { getMunicipalities } from '../services/locations';
-import {getMarketData,getMarketDataSummary, } from '../services/market-data';
-import type { Municipality } from '../types/location';
-import type {MarketData, MarketDataSummary, } from '../types/market-data';
-import type {MarketFilters as MarketFiltersState,} from '../types/market-filters';
-import './MarketDashboard.css';
-import MarketRankingPosition from '../components/MarketRankingPosition';
+import { useEffect, useState } from "react";
+
+import MarketFilters from "../components/MarketFilters";
+import MarketSummary from "../components/MarketSummary";
+import MarketRanking from "../components/MarketRanking";
+import PopulationAgeChart from "../components/PopulationAgeChart";
+import AnsAgeDistributionChart from "../components/AnsAgeDistributionChart";
+import { getMunicipalities } from "../services/locations";
+
+import {
+  getMarketAnalysis,
+  getMarketData,
+  getMarketDataSummary,
+} from "../services/market-data";
+
+import type {
+  MarketAnalysis,
+  MarketData,
+  MarketDataSummary,
+} from "../types/market-data";
+
+import type { Municipality } from "../types/location";
+import type { MarketFilters as MarketFiltersState } from "../types/market-filters";
+import "./MarketDashboard.css";
+import MarketRankingPosition from "../components/MarketRankingPosition";
+import MarketAnalysisSummary from "../components/MarketAnalysisSummary";
 
 const initialFilters: MarketFiltersState = {
-  state: '',
-  municipality: '',
-  ageGroup: '',
-  sortBy: 'population',
-  order: 'desc',
+  state: "",
+  municipality: "",
+  ageGroup: "",
+  sortBy: "population",
+  order: "desc",
 };
 
 function MarketDashboard() {
-  const [marketData, setMarketData] =
-    useState<MarketData[]>([]);
+  const [marketData, setMarketData] = useState<MarketData[]>([]);
 
-  const [rankingData, setRankingData] =
-    useState<MarketData[]>([]);
+  const [rankingData, setRankingData] = useState<MarketData[]>([]);
 
-  const [marketSummary, setMarketSummary] =
-    useState<MarketDataSummary | null>(null);
+  const [marketSummary, setMarketSummary] = useState<MarketDataSummary | null>(
+    null,
+  );
 
-  const [municipalities, setMunicipalities] =
-    useState<Municipality[]>([]);
+  const [marketAnalysis, setMarketAnalysis] = useState<MarketAnalysis | null>(
+    null,
+  );
 
-  const [filters, setFilters] =
-    useState<MarketFiltersState>(initialFilters);
+  const [municipalities, setMunicipalities] = useState<Municipality[]>([]);
+
+  const [filters, setFilters] = useState<MarketFiltersState>(initialFilters);
 
   const [appliedFilters, setAppliedFilters] =
     useState<MarketFiltersState>(initialFilters);
 
-  const [error, setError] =
-    useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const [isLoading, setIsLoading] =
-    useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function loadMarketData() {
@@ -50,34 +63,43 @@ function MarketDashboard() {
         setIsLoading(true);
         setError(null);
 
-        const marketResponse =
-  await getMarketData(appliedFilters);
+        const marketResponse = await getMarketData(appliedFilters);
 
-const summaryResponse =
-  await getMarketDataSummary(appliedFilters);
+        const summaryResponse = await getMarketDataSummary(appliedFilters);
 
         setMarketData(marketResponse.data);
         setMarketSummary(summaryResponse);
 
         if (appliedFilters.municipality) {
+          const selectedMunicipality = municipalities.find(
+            (municipality) => municipality.name === appliedFilters.municipality,
+          );
+
+          if (!selectedMunicipality) {
+            throw new Error("Município selecionado não encontrado.");
+          }
+
+          const analysisResponse = await getMarketAnalysis(
+            selectedMunicipality.ibgeCode,
+          );
+
+          setMarketAnalysis(analysisResponse);
+
           const rankingResponse = await getMarketData({
             ...appliedFilters,
-            municipality: '',
+            municipality: "",
           });
 
           setRankingData(rankingResponse.data);
         } else {
+          setMarketAnalysis(null);
           setRankingData(marketResponse.data);
         }
       } catch (error) {
-        console.error(
-          'Erro ao carregar dados de mercado:',
-          error,
-        );
+        console.error("Erro ao carregar dados de mercado:", error);
 
-        setError(
-          'Não foi possível carregar os dados de mercado.',
-        );
+        setError("Não foi possível carregar os dados de mercado.");
+        setMarketAnalysis(null);
       } finally {
         setIsLoading(false);
       }
@@ -98,10 +120,7 @@ const summaryResponse =
 
         setMunicipalities(data);
       } catch (error) {
-        console.error(
-          'Erro ao carregar municípios:',
-          error,
-        );
+        console.error("Erro ao carregar municípios:", error);
 
         setMunicipalities([]);
       }
@@ -115,18 +134,14 @@ const summaryResponse =
       <header className="dashboard-header">
         <h1>Painel de Inteligência de Mercado</h1>
 
-        <p>
-          Análise de mercado por região e público.
-        </p>
+        <p>Análise de mercado por região e público.</p>
       </header>
 
       <MarketFilters
         filters={filters}
         municipalities={municipalities}
         onChange={setFilters}
-        onAnalyze={() =>
-          setAppliedFilters(filters)
-        }
+        onAnalyze={() => setAppliedFilters(filters)}
       />
 
       {isLoading && (
@@ -143,6 +158,8 @@ const summaryResponse =
 
       {!isLoading && !error && (
         <div className="dashboard-content">
+          {marketAnalysis && <MarketAnalysisSummary data={marketAnalysis} />}
+
           {marketSummary && (
             <MarketSummary
               summary={marketSummary}
@@ -175,15 +192,21 @@ const summaryResponse =
                 <MarketRankingPosition
                   marketData={marketData[0]}
                   sortBy={appliedFilters.sortBy}
-                  state={marketData[0].state ?? ''}
+                  state={marketData[0].state ?? ""}
                 />
               )}
             </div>
 
-            <AgeDistributionChart
-              data={marketData}
-              selectedAgeGroup={appliedFilters.ageGroup}
-            />
+            {marketAnalysis && (
+              <>
+                <PopulationAgeChart
+                  data={marketAnalysis}
+                  selectedAgeGroup={appliedFilters.ageGroup}
+                />
+
+                <AnsAgeDistributionChart data={marketAnalysis} />
+              </>
+            )}
           </div>
         </div>
       )}
