@@ -462,4 +462,80 @@ export class AnsService {
       municipalities: municipalDataRecords.length,
     };
   }
+  async getMunicipalityData(ibgeCode: string) {
+  const municipality = await this.prisma.location.findUnique({
+    where: {
+      ibgeCode,
+    },
+    select: {
+      id: true,
+      ibgeCode: true,
+      name: true,
+      parent: {
+        select: {
+          ibgeCode: true,
+          name: true,
+        },
+      },
+    },
+  });
+
+  if (!municipality || municipality.parent === null) {
+    return null;
+  }
+
+  const municipalData =
+    await this.prisma.ansMunicipalData.findFirst({
+      where: {
+        locationId: municipality.id,
+      },
+      orderBy: {
+        referencePeriod: 'desc',
+      },
+    });
+
+  if (!municipalData) {
+    return null;
+  }
+
+  const profiles =
+    await this.prisma.ansMunicipalProfile.findMany({
+      where: {
+        locationId: municipality.id,
+        referencePeriod: municipalData.referencePeriod,
+      },
+      orderBy: [
+        {
+          sex: 'asc',
+        },
+        {
+          ageGroup: 'asc',
+        },
+      ],
+    });
+
+  return {
+    municipality: {
+      code: municipality.ibgeCode,
+      name: municipality.name,
+      state: {
+        code: municipality.parent.ibgeCode,
+        name: municipality.parent.name,
+      },
+    },
+    referencePeriod: municipalData.referencePeriod,
+    beneficiaries: {
+      medical: municipalData.beneficiariesMedical,
+      dental: municipalData.beneficiariesDental,
+      total: municipalData.beneficiariesTotal,
+    },
+    profiles: profiles.map((profile) => ({
+      sex: profile.sex,
+      ageGroup: profile.ageGroup,
+      beneficiariesMedical: profile.beneficiariesMedical,
+      beneficiariesDental: profile.beneficiariesDental,
+      beneficiariesTotal: profile.beneficiariesTotal,
+    })),
+  };
+}
 }

@@ -14,13 +14,13 @@ export class MarketDataController {
 
   @Post('sync/household-income')
   syncHouseholdIncome() {
-  return this.marketDataService.syncHouseholdIncome(2022);
- }
- 
- @Post('sync/age-groups')
+    return this.marketDataService.syncHouseholdIncome(2022);
+  }
+
+  @Post('sync/age-groups')
   syncAgeGroups() {
-  return this.marketDataService.syncAgeGroups(2022);
- }
+    return this.marketDataService.syncAgeGroups(2022);
+  }
 
   @Get('count')
   countIndicators() {
@@ -35,5 +35,5 @@ export class MarketDataController {
   @Get()
   findMarketData(@Query() filters: FindMarketDataDto) {
     return this.marketDataService.findMarketData(filters);
- }
+  }
 }

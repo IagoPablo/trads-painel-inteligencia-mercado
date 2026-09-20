@@ -9,6 +9,7 @@ import { LocationsModule } from './locations/locations.module';
 import { MarketDataModule } from './market-data/market-data.module';
 import { DataSyncModule } from './data-sync/data-sync.module';
 import { AnsModule } from './ans/ans.module';
+import { MarketAnalysisModule } from './market-analysis/market-analysis.module';
 
 @Module({
   imports: [ConfigModule.forRoot({
@@ -20,6 +21,7 @@ import { AnsModule } from './ans/ans.module';
     MarketDataModule,
     DataSyncModule,
     AnsModule,
+    MarketAnalysisModule,
   ],
   controllers: [AppController],
   providers: [AppService],
