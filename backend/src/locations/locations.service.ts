@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../database/prisma.service';
 import { IbgeService } from '../ibge/ibge.service';
@@ -16,39 +16,45 @@ export class LocationsService {
   }
 
   async getMunicipalities(state?: string) {
-  return this.prisma.location.findMany({
-    where: {
-      type: 'MUNICIPALITY',
-      parent: state
-        ? {
-            ibgeCode: STATE_CODES[state.toUpperCase()],
-          }
-        : undefined,
-    },
-    select: {
-      ibgeCode: true,
-      name: true,
-    },
-    orderBy: {
-      name: 'asc',
-    },
-  });
-}
+    const stateCode = state ? STATE_CODES[state.toUpperCase()] : undefined;
+
+    if (state && !stateCode) {
+      throw new BadRequestException('state deve ser uma sigla de UF válida.');
+    }
+
+    return this.prisma.location.findMany({
+      where: {
+        type: 'MUNICIPALITY',
+        parent: stateCode
+          ? {
+              ibgeCode: stateCode,
+            }
+          : undefined,
+      },
+      select: {
+        ibgeCode: true,
+        name: true,
+      },
+      orderBy: {
+        name: 'asc',
+      },
+    });
+  }
 
   async findMunicipality(name: string) {
     return this.prisma.location.findFirst({
-        where: {
+      where: {
         name: {
-            equals: name,
-            mode: 'insensitive',
+          equals: name,
+          mode: 'insensitive',
         },
         type: 'MUNICIPALITY',
-        },
-        include: {
-            parent: true,
-        },
-     });
-    }
+      },
+      include: {
+        parent: true,
+      },
+    });
+  }
 
   async syncLocations() {
     const states = await this.ibgeService.getStates();
@@ -93,8 +99,9 @@ export class LocationsService {
         continue;
       }
 
-      const municipalities =
-        await this.ibgeService.getMunicipalitiesByState(state.sigla);
+      const municipalities = await this.ibgeService.getMunicipalitiesByState(
+        state.sigla,
+      );
 
       for (const municipality of municipalities) {
         await this.prisma.location.upsert({
@@ -123,30 +130,27 @@ export class LocationsService {
       municipalities: municipalitiesCount,
     };
   }
-    async findMunicipalityByAnsCode(
-      ansCode: string,
-      stateCode: string,
-    ) {
-      return this.prisma.location.findFirst({
-        where: {
-          type: 'MUNICIPALITY',
-          ibgeCode: {
-            startsWith: ansCode,
-          },
-          parent: {
-            ibgeCode: stateCode,
-            type: 'STATE',
-          },
+  async findMunicipalityByAnsCode(ansCode: string, stateCode: string) {
+    return this.prisma.location.findFirst({
+      where: {
+        type: 'MUNICIPALITY',
+        ibgeCode: {
+          startsWith: ansCode,
         },
-        select: {
-          id: true,
-          ibgeCode: true,
-          name: true,
-          parentId: true,
+        parent: {
+          ibgeCode: stateCode,
+          type: 'STATE',
         },
+      },
+      select: {
+        id: true,
+        ibgeCode: true,
+        name: true,
+        parentId: true,
+      },
     });
   }
-  
+
   async getMunicipalitiesForAnsMapping() {
     return this.prisma.location.findMany({
       where: {

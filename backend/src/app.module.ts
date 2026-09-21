@@ -12,11 +12,12 @@ import { AnsModule } from './ans/ans.module';
 import { MarketAnalysisModule } from './market-analysis/market-analysis.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({
+  imports: [
+    ConfigModule.forRoot({
       isGlobal: true,
     }),
-    DatabaseModule, 
-    IbgeModule, 
+    DatabaseModule,
+    IbgeModule,
     LocationsModule,
     MarketDataModule,
     DataSyncModule,

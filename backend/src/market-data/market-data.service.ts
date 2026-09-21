@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+
 import { PrismaService } from '../database/prisma.service';
 import { IbgeService } from '../ibge/ibge.service';
 import { FindMarketDataDto } from './dto/find-market-data.dto';
@@ -204,45 +205,35 @@ export class MarketDataService {
       municipalitiesByState.set(location.parentId, municipalities);
     }
 
-    const ageGroups = [
-      {
-        dimension: '0-14',
-        sourceCodes: ['93070', '93084', '93085'],
-      },
-      {
-        dimension: '15-24',
-        sourceCodes: ['93086', '93087'],
-      },
-      {
-        dimension: '25-34',
-        sourceCodes: ['93088', '93089'],
-      },
-      {
-        dimension: '35-44',
-        sourceCodes: ['93090', '93091'],
-      },
-      {
-        dimension: '45-54',
-        sourceCodes: ['93092', '93093'],
-      },
-      {
-        dimension: '55-64',
-        sourceCodes: ['93094', '93095'],
-      },
-      {
-        dimension: '65+',
-        sourceCodes: [
-          '93096',
-          '93097',
-          '93098',
-          '49108',
-          '49109',
-          '60040',
-          '60041',
-          '6653',
-        ],
-      },
-    ];
+    const ageGroupBySourceCode = new Map<string, string>([
+      ['93070', '0-14'],
+      ['93084', '0-14'],
+      ['93085', '0-14'],
+
+      ['93086', '15-24'],
+      ['93087', '15-24'],
+
+      ['93088', '25-34'],
+      ['93089', '25-34'],
+
+      ['93090', '35-44'],
+      ['93091', '35-44'],
+
+      ['93092', '45-54'],
+      ['93093', '45-54'],
+
+      ['93094', '55-64'],
+      ['93095', '55-64'],
+
+      ['93096', '65+'],
+      ['93097', '65+'],
+      ['93098', '65+'],
+      ['49108', '65+'],
+      ['49109', '65+'],
+      ['60040', '65+'],
+      ['60041', '65+'],
+      ['6653', '65+'],
+    ]);
 
     const indicators: {
       locationId: string;
@@ -255,6 +246,11 @@ export class MarketDataService {
       ibgeTable: string;
       ibgeVariable: string;
     }[] = [];
+
+    const indicatorByLocationAndDimension = new Map<
+      string,
+      (typeof indicators)[number]
+    >();
 
     let ibgeRecords = 0;
 
@@ -292,11 +288,9 @@ export class MarketDataService {
             continue;
           }
 
-          const targetGroup = ageGroups.find((group) =>
-            group.sourceCodes.includes(ageCategoryCode),
-          );
+          const targetDimension = ageGroupBySourceCode.get(ageCategoryCode);
 
-          if (!targetGroup) {
+          if (!targetDimension) {
             continue;
           }
 
@@ -325,28 +319,28 @@ export class MarketDataService {
               continue;
             }
 
-            const existing = indicators.find(
-              (indicator) =>
-                indicator.locationId === location.id &&
-                indicator.dimension === targetGroup.dimension,
-            );
+            const indicatorKey = `${location.id}:${targetDimension}`;
+
+            const existing = indicatorByLocationAndDimension.get(indicatorKey);
 
             if (existing) {
-              existing.value = String(
-                Number(existing.value) + Number(numericValue),
-              );
+              existing.value = String(Number(existing.value) + numericValue);
             } else {
-              indicators.push({
+              const indicator = {
                 locationId: location.id,
-                indicator: 'AGE_GROUP',
+                indicator: 'AGE_GROUP' as const,
                 value: String(numericValue),
                 unit: 'Pessoas',
                 referencePeriod,
-                dimension: targetGroup.dimension,
+                dimension: targetDimension,
                 source: 'IBGE',
                 ibgeTable: '9514',
                 ibgeVariable: '93',
-              });
+              };
+
+              indicators.push(indicator);
+
+              indicatorByLocationAndDimension.set(indicatorKey, indicator);
             }
           }
         }
@@ -650,6 +644,28 @@ export class MarketDataService {
           : 0,
       ageGroups,
     };
+  }
+  async hasRequiredIndicators(referencePeriod: number) {
+    const requiredIndicators: Array<
+      'POPULATION' | 'HOUSEHOLD_INCOME' | 'AGE_GROUP'
+    > = ['POPULATION', 'HOUSEHOLD_INCOME', 'AGE_GROUP'];
+
+    const indicators = await this.prisma.marketIndicator.findMany({
+      where: {
+        referencePeriod,
+        indicator: {
+          in: requiredIndicators,
+        },
+      },
+      select: {
+        indicator: true,
+      },
+      distinct: ['indicator'],
+    });
+
+    return requiredIndicators.every((indicator) =>
+      indicators.some((item) => item.indicator === indicator),
+    );
   }
   async getMunicipalityMarketData(ibgeCode: string) {
     const municipality = await this.prisma.location.findUnique({

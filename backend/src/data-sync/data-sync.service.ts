@@ -1,6 +1,4 @@
-import {
-  Injectable,
-  Logger,OnApplicationBootstrap,} from '@nestjs/common';
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 
 import { LocationsService } from '../locations/locations.service';
 import { MarketDataService } from '../market-data/market-data.service';
@@ -8,6 +6,8 @@ import { MarketDataService } from '../market-data/market-data.service';
 @Injectable()
 export class DataSyncService implements OnApplicationBootstrap {
   private readonly logger = new Logger(DataSyncService.name);
+
+  private readonly marketDataReferencePeriod = 2022;
 
   constructor(
     private readonly locationsService: LocationsService,
@@ -19,42 +19,45 @@ export class DataSyncService implements OnApplicationBootstrap {
   }
 
   async syncInitialData() {
-    const locationsCount =
-        await this.locationsService.countLocations();
+    const locationsCount = await this.locationsService.countLocations();
 
-    const indicatorsCount =
-        await this.marketDataService.countIndicators();
+    const hasRequiredIndicators =
+      await this.marketDataService.hasRequiredIndicators(
+        this.marketDataReferencePeriod,
+      );
 
-    if (locationsCount > 0 && indicatorsCount > 0) {
-        this.logger.log(
+    if (locationsCount > 0 && hasRequiredIndicators) {
+      this.logger.log(
         'Dados de mercado já estão disponíveis. Sincronização inicial ignorada.',
-        );
+      );
 
-        return;
+      return;
     }
 
     this.logger.log(
-        'Dados de mercado não encontrados. Iniciando sincronização inicial...',
+      'Dados de mercado incompletos ou não encontrados. Iniciando sincronização inicial...',
     );
 
-    this.logger.log('Sincronizando localidades...');
-    await this.locationsService.syncLocations();
-    this.logger.log('Localidades sincronizadas.');
+    if (locationsCount === 0) {
+      this.logger.log('Sincronizando localidades...');
+      await this.locationsService.syncLocations();
+      this.logger.log('Localidades sincronizadas.');
+    }
 
     this.logger.log('Sincronizando população...');
-    await this.marketDataService.syncPopulation(2022);
+    await this.marketDataService.syncPopulation(this.marketDataReferencePeriod);
     this.logger.log('População sincronizada.');
 
     this.logger.log('Sincronizando renda domiciliar...');
-    await this.marketDataService.syncHouseholdIncome(2022);
+    await this.marketDataService.syncHouseholdIncome(
+      this.marketDataReferencePeriod,
+    );
     this.logger.log('Renda domiciliar sincronizada.');
 
     this.logger.log('Sincronizando faixas etárias...');
-    await this.marketDataService.syncAgeGroups(2022);
+    await this.marketDataService.syncAgeGroups(this.marketDataReferencePeriod);
     this.logger.log('Faixas etárias sincronizadas.');
 
-    this.logger.log(
-        'Sincronização inicial dos dados concluída.',
-    );
+    this.logger.log('Sincronização inicial dos dados concluída.');
   }
 }

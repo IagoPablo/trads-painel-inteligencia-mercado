@@ -30,15 +30,32 @@ export class AnsService {
       );
     }
 
-    const response = await fetch(this.csvUrl);
+    try {
+      const response = await fetch(this.csvUrl, {
+        signal: AbortSignal.timeout(30_000),
+      });
 
-    if (!response.ok || !response.body) {
+      if (!response.ok || !response.body) {
+        throw new ServiceUnavailableException(
+          `Falha ao baixar dados da ANS. HTTP ${response.status}.`,
+        );
+      }
+
+      return response.body.pipeThrough(new TextDecoderStream('windows-1252'));
+    } catch (error) {
+      if (error instanceof ServiceUnavailableException) {
+        throw error;
+      }
+
+      this.logger.error(
+        'Erro ao baixar os dados da ANS.',
+        error instanceof Error ? error.stack : String(error),
+      );
+
       throw new ServiceUnavailableException(
-        `Falha ao baixar dados da ANS. HTTP ${response.status}.`,
+        'Não foi possível obter os dados da ANS.',
       );
     }
-
-    return response.body.pipeThrough(new TextDecoderStream('windows-1252'));
   }
 
   private parseNumber(value: unknown): number {
@@ -191,7 +208,6 @@ export class AnsService {
     }
 
     return existing;
-    
   }
 
   private async processCoverageRecords() {
@@ -463,29 +479,28 @@ export class AnsService {
     };
   }
   async getMunicipalityData(ibgeCode: string) {
-  const municipality = await this.prisma.location.findUnique({
-    where: {
-      ibgeCode,
-    },
-    select: {
-      id: true,
-      ibgeCode: true,
-      name: true,
-      parent: {
-        select: {
-          ibgeCode: true,
-          name: true,
+    const municipality = await this.prisma.location.findUnique({
+      where: {
+        ibgeCode,
+      },
+      select: {
+        id: true,
+        ibgeCode: true,
+        name: true,
+        parent: {
+          select: {
+            ibgeCode: true,
+            name: true,
+          },
         },
       },
-    },
-  });
+    });
 
-  if (!municipality || municipality.parent === null) {
-    return null;
-  }
+    if (!municipality || municipality.parent === null) {
+      return null;
+    }
 
-  const municipalData =
-    await this.prisma.ansMunicipalData.findFirst({
+    const municipalData = await this.prisma.ansMunicipalData.findFirst({
       where: {
         locationId: municipality.id,
       },
@@ -494,12 +509,11 @@ export class AnsService {
       },
     });
 
-  if (!municipalData) {
-    return null;
-  }
+    if (!municipalData) {
+      return null;
+    }
 
-  const profiles =
-    await this.prisma.ansMunicipalProfile.findMany({
+    const profiles = await this.prisma.ansMunicipalProfile.findMany({
       where: {
         locationId: municipality.id,
         referencePeriod: municipalData.referencePeriod,
@@ -514,28 +528,28 @@ export class AnsService {
       ],
     });
 
-  return {
-    municipality: {
-      code: municipality.ibgeCode,
-      name: municipality.name,
-      state: {
-        code: municipality.parent.ibgeCode,
-        name: municipality.parent.name,
+    return {
+      municipality: {
+        code: municipality.ibgeCode,
+        name: municipality.name,
+        state: {
+          code: municipality.parent.ibgeCode,
+          name: municipality.parent.name,
+        },
       },
-    },
-    referencePeriod: municipalData.referencePeriod,
-    beneficiaries: {
-      medical: municipalData.beneficiariesMedical,
-      dental: municipalData.beneficiariesDental,
-      total: municipalData.beneficiariesTotal,
-    },
-    profiles: profiles.map((profile) => ({
-      sex: profile.sex,
-      ageGroup: profile.ageGroup,
-      beneficiariesMedical: profile.beneficiariesMedical,
-      beneficiariesDental: profile.beneficiariesDental,
-      beneficiariesTotal: profile.beneficiariesTotal,
-    })),
-  };
-}
+      referencePeriod: municipalData.referencePeriod,
+      beneficiaries: {
+        medical: municipalData.beneficiariesMedical,
+        dental: municipalData.beneficiariesDental,
+        total: municipalData.beneficiariesTotal,
+      },
+      profiles: profiles.map((profile) => ({
+        sex: profile.sex,
+        ageGroup: profile.ageGroup,
+        beneficiariesMedical: profile.beneficiariesMedical,
+        beneficiariesDental: profile.beneficiariesDental,
+        beneficiariesTotal: profile.beneficiariesTotal,
+      })),
+    };
+  }
 }

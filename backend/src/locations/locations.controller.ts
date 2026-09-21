@@ -9,7 +9,7 @@ export class LocationsController {
   countLocations() {
     return this.locationsService.countLocations();
   }
-  
+
   @Get('search')
   searchMunicipality(@Query('name') name: string) {
     return this.locationsService.findMunicipality(name);
@@ -19,7 +19,7 @@ export class LocationsController {
   syncLocations() {
     return this.locationsService.syncLocations();
   }
-  
+
   @Get('municipalities')
   getMunicipalities(@Query('state') state?: string) {
     return this.locationsService.getMunicipalities(state);
