@@ -2,6 +2,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Rectangle,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -10,8 +11,37 @@ import {
 
 import type { MarketAnalysis } from "../types/market-data";
 
+import "./PopulationAgeChart.css";
+
 interface AnsAgeDistributionChartProps {
   data: MarketAnalysis;
+}
+
+function AnsAgeTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: Array<{
+    payload: {
+      ageGroup: string;
+      beneficiaries: number;
+    };
+  }>;
+}) {
+  if (!active || !payload?.length) {
+    return null;
+  }
+
+  const item = payload[0].payload;
+
+  return (
+    <div className="age-chart-tooltip">
+      <span>Beneficiários</span>
+      <strong>{item.ageGroup}</strong>
+      {item.beneficiaries.toLocaleString("pt-BR")} beneficiários
+    </div>
+  );
 }
 
 function AnsAgeDistributionChart({ data }: AnsAgeDistributionChartProps) {
@@ -36,32 +66,93 @@ function AnsAgeDistributionChart({ data }: AnsAgeDistributionChartProps) {
   }));
 
   return (
-    <section>
-      <h2>Beneficiários por faixa etária</h2>
+    <section className="age-chart">
+      <header className="age-chart-header">
+        <div className="age-chart-heading">
+          <span className="age-chart-eyebrow">Perfil do mercado</span>
+
+          <h2>Beneficiários por faixa etária</h2>
+
+          <p>
+            Distribuição dos beneficiários de planos por faixa etária segundo a
+            ANS.
+          </p>
+        </div>
+
+        <div className="age-chart-reference">
+          <span>Fonte</span>
+          <strong>ANS {data.ans.referencePeriod}</strong>
+        </div>
+      </header>
 
       <ResponsiveContainer width="100%" height={400}>
         <BarChart
           data={chartData}
           margin={{
-            top: 10,
+            top: 28,
             right: 30,
-            left: 20,
-            bottom: 10,
+            left: 12,
+            bottom: 50,
           }}
+          barCategoryGap="18%"
         >
-          <CartesianGrid strokeDasharray="3 3" />
-
-          <XAxis dataKey="ageGroup" angle={-30} textAnchor="end" height={80} />
-
-          <YAxis />
-
-          <Tooltip
-            formatter={(value) => Number(value).toLocaleString("pt-BR")}
+          <CartesianGrid
+            vertical={false}
+            stroke="#edf0f4"
+            strokeDasharray="0"
           />
 
-          <Bar dataKey="beneficiaries" fill="#60a5fa" name="Beneficiários" />
+          <XAxis
+            dataKey="ageGroup"
+            angle={-30}
+            textAnchor="end"
+            height={80}
+            interval={0}
+            axisLine={false}
+            tickLine={false}
+            tick={{
+              fill: "#344054",
+              fontSize: 12,
+              fontWeight: 500,
+            }}
+          />
+
+          <YAxis
+            axisLine={false}
+            tickLine={false}
+            tick={{
+              fill: "#98a2b3",
+              fontSize: 10,
+            }}
+            tickFormatter={(value) => Number(value).toLocaleString("pt-BR")}
+          />
+
+          <Tooltip
+            content={<AnsAgeTooltip />}
+            cursor={{
+              fill: "rgba(37, 99, 235, 0.04)",
+            }}
+          />
+
+          <Bar
+            dataKey="beneficiaries"
+            name="Beneficiários"
+            maxBarSize={34}
+            radius={[5, 5, 0, 0]}
+            cursor="default"
+            shape={(props) => <Rectangle {...props} fill="#2563eb" />}
+          />
         </BarChart>
       </ResponsiveContainer>
+
+      <footer className="age-chart-footer">
+        <div className="age-chart-legend">
+          <span className="age-chart-legend-dot" />
+          <span>Beneficiários de planos</span>
+        </div>
+
+        <span>Dados referentes a {data.ans.referencePeriod}</span>
+      </footer>
     </section>
   );
 }

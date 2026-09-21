@@ -1,0 +1,213 @@
+.age-chart {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+
+  overflow: hidden;
+
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+
+  background: var(--color-surface);
+
+  box-shadow:
+    0 1px 2px rgba(16, 24, 40, 0.03),
+    0 8px 24px rgba(16, 24, 40, 0.04);
+}
+
+.age-chart-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+
+  padding: 24px 26px 20px;
+
+  border-bottom: 1px solid #eef1f5;
+}
+
+.age-chart-heading {
+  min-width: 0;
+}
+
+.age-chart-eyebrow {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: var(--color-primary);
+
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.age-chart-heading h2 {
+  margin: 0;
+
+  color: var(--color-text);
+
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.3;
+
+  letter-spacing: -0.02em;
+}
+
+.age-chart-heading p {
+  margin: 6px 0 0;
+
+  color: var(--color-text-secondary);
+
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.age-chart-reference {
+  display: flex;
+  min-width: 92px;
+
+  flex-direction: column;
+  align-items: flex-end;
+
+  padding: 8px 11px;
+
+  border: 1px solid #e4e7ec;
+  border-radius: 8px;
+
+  background: #fafbfc;
+}
+
+.age-chart-reference span {
+  color: var(--color-text-muted);
+
+  font-size: 9px;
+  font-weight: 600;
+
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.age-chart-reference strong {
+  margin-top: 2px;
+
+  color: var(--color-text);
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.age-chart-tooltip {
+  display: flex;
+  min-width: 170px;
+
+  flex-direction: column;
+  gap: 3px;
+
+  padding: 12px 14px;
+
+  border: 1px solid #e4e7ec;
+  border-radius: 10px;
+
+  background: #ffffff;
+
+  box-shadow: 0 8px 20px rgba(16, 24, 40, 0.1);
+}
+
+.age-chart-tooltip span {
+  color: var(--color-primary);
+
+  font-size: 10px;
+  font-weight: 700;
+
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.age-chart-tooltip strong {
+  margin-top: 2px;
+
+  color: var(--color-text);
+
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.age-chart-tooltip b {
+  margin-top: 4px;
+
+  color: var(--color-text);
+
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.age-chart-footer {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+
+  padding: 12px 26px;
+
+  border-top: 1px solid #eef1f5;
+
+  background: #fafbfc;
+
+  color: var(--color-text-muted);
+
+  font-size: 10px;
+}
+
+.age-chart-legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  color: var(--color-text-secondary);
+
+  font-weight: 500;
+}
+
+.age-chart-legend-dot {
+  width: 7px;
+  height: 7px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background: #2563eb;
+}
+
+.age-chart-footer > span:last-child {
+  margin-left: auto;
+}
+
+@media (max-width: 700px) {
+  .age-chart-header {
+    flex-direction: column;
+    gap: 14px;
+
+    padding: 20px 18px 16px;
+  }
+
+  .age-chart-reference {
+    align-items: flex-start;
+  }
+
+  .age-chart-footer {
+    align-items: flex-start;
+    flex-wrap: wrap;
+
+    padding: 12px 18px;
+  }
+
+  .age-chart-footer > span:last-child {
+    width: 100%;
+    margin-left: 0;
+  }
+}

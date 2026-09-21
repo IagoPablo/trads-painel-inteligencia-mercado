@@ -138,7 +138,6 @@ useEffect(() => {
         normalizedSearch,
       ),
     )
-    .slice(0, 20);
 
   return (
     <section className="market-filters">

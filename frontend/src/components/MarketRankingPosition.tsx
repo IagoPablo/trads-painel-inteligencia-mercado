@@ -1,6 +1,6 @@
-import type { MarketData } from '../types/market-data';
-import type { SortBy } from '../types/market-filters';
-import './MarketRankingPosition.css';
+import type { MarketData } from "../types/market-data";
+import type { SortBy } from "../types/market-filters";
+import "./MarketRankingPosition.css";
 
 interface MarketRankingPositionProps {
   marketData: MarketData | null;
@@ -22,9 +22,7 @@ function MarketRankingPosition({
   }
 
   const rankingLabel =
-    sortBy === 'population'
-      ? 'população'
-      : 'renda domiciliar per capita';
+    sortBy === "population" ? "população" : "renda domiciliar per capita";
 
   const position = marketData.rankingPosition;
 
@@ -35,19 +33,15 @@ function MarketRankingPosition({
           Posição selecionada
         </span>
 
-        <strong>
-          {position}º
-        </strong>
+        <strong>{position}º</strong>
       </div>
 
       <div>
-        <span>
-          {marketData.municipality}
-        </span>
+        <span>{marketData.municipality}</span>
 
         <p>
           {position}º lugar em {rankingLabel}
-          {state ? ` no estado de ${state}` : ''}
+          {state ? ` no estado de ${state}` : ""}
         </p>
       </div>
     </section>

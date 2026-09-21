@@ -111,7 +111,7 @@ function MarketDashboard() {
     }
 
     loadMarketData();
-  }, [appliedFilters, municipalities]);
+  }, [appliedFilters]);
 
   useEffect(() => {
     async function loadMunicipalities() {
