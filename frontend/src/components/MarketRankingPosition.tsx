@@ -30,18 +30,18 @@ function MarketRankingPosition({
     <section className="market-ranking-position">
       <div>
         <span className="market-ranking-position-label">
-          Posição selecionada
+          Posição no ranking estadual
         </span>
 
-        <strong>{position}º</strong>
+        <strong>{position}º lugar</strong>
       </div>
 
       <div>
         <span>{marketData.municipality}</span>
 
         <p>
-          {position}º lugar em {rankingLabel}
-          {state ? ` no estado de ${state}` : ""}
+          {state ? `${state} · ` : ""}
+          Critério: {rankingLabel}
         </p>
       </div>
     </section>

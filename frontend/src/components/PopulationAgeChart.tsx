@@ -15,8 +15,9 @@ import "./PopulationAgeChart.css";
 
 interface PopulationAgeChartProps {
   data: MarketAnalysis;
+  selectedAgeGroup: string;
+  onSelectAgeGroup: (ageGroup: string) => void;
 }
-
 function PopulationTooltip({
   active,
   payload,
@@ -38,9 +39,7 @@ function PopulationTooltip({
   return (
     <div className="age-chart-tooltip">
       <span>População</span>
-
       <strong>{item.ageGroup} anos</strong>
-
       {item.population.toLocaleString("pt-BR")} pessoas
     </div>
   );
@@ -48,6 +47,8 @@ function PopulationTooltip({
 
 function PopulationAgeChart({
   data,
+  selectedAgeGroup,
+  onSelectAgeGroup,
 }: PopulationAgeChartProps) {
   const ageGroups = [
     "0-14",
@@ -68,15 +69,11 @@ function PopulationAgeChart({
     <section className="age-chart">
       <header className="age-chart-header">
         <div className="age-chart-heading">
-          <span className="age-chart-eyebrow">
-            Perfil demográfico
-          </span>
+          <span className="age-chart-eyebrow">Perfil demográfico</span>
 
           <h2>Distribuição da população por faixa etária</h2>
 
-          <p>
-            População residente por faixa etária segundo o IBGE.
-          </p>
+          <p>População residente por faixa etária segundo o IBGE.</p>
         </div>
 
         <div className="age-chart-reference">
@@ -120,9 +117,7 @@ function PopulationAgeChart({
               fill: "#98a2b3",
               fontSize: 10,
             }}
-            tickFormatter={(value) =>
-              Number(value).toLocaleString("pt-BR")
-            }
+            tickFormatter={(value) => Number(value).toLocaleString("pt-BR")}
           />
 
           <Tooltip
@@ -137,13 +132,24 @@ function PopulationAgeChart({
             name="População"
             maxBarSize={42}
             radius={[5, 5, 0, 0]}
-            cursor="default"
-            shape={(props) => (
-              <Rectangle
-                {...props}
-                fill="#2563eb"
-              />
-            )}
+            cursor="pointer"
+            onClick={(entry) => {
+              const ageGroup = entry?.payload?.ageGroup;
+
+              if (ageGroup) {
+                onSelectAgeGroup(ageGroup);
+              }
+            }}
+            shape={(props) => {
+              const isSelected = props.payload?.ageGroup === selectedAgeGroup;
+
+              return (
+                <Rectangle
+                  {...props}
+                  fill={isSelected ? "#1E3A8A" : "#2563eb"}
+                />
+              );
+            }}
           />
         </BarChart>
       </ResponsiveContainer>
@@ -154,9 +160,14 @@ function PopulationAgeChart({
           <span>População residente</span>
         </div>
 
-        <span>
-          Dados referentes a {data.ibge.referencePeriod}
-        </span>
+        {selectedAgeGroup && (
+          <div className="age-chart-legend">
+            <span className="age-chart-legend-dot age-chart-legend-dot-selected" />
+            <span>Faixa selecionada: {selectedAgeGroup} anos</span>
+          </div>
+        )}
+
+        <span>Dados referentes a {data.ibge.referencePeriod}</span>
       </footer>
     </section>
   );

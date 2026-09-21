@@ -15,6 +15,7 @@ import "./PopulationAgeChart.css";
 
 interface AnsAgeDistributionChartProps {
   data: MarketAnalysis;
+  selectedAgeGroup: string;
 }
 
 function AnsAgeTooltip({
@@ -44,7 +45,10 @@ function AnsAgeTooltip({
   );
 }
 
-function AnsAgeDistributionChart({ data }: AnsAgeDistributionChartProps) {
+function AnsAgeDistributionChart({
+  data,
+  selectedAgeGroup,
+}: AnsAgeDistributionChartProps) {
   const ageGroups = [
     "Até 1 ano",
     "1 a 4 anos",
@@ -140,7 +144,16 @@ function AnsAgeDistributionChart({ data }: AnsAgeDistributionChartProps) {
             maxBarSize={34}
             radius={[5, 5, 0, 0]}
             cursor="default"
-            shape={(props) => <Rectangle {...props} fill="#2563eb" />}
+            shape={(props) => {
+              const isSelected = props.payload?.ageGroup === selectedAgeGroup;
+
+              return (
+                <Rectangle
+                  {...props}
+                  fill={isSelected ? "#344054" : "#2563eb"}
+                />
+              );
+            }}
           />
         </BarChart>
       </ResponsiveContainer>

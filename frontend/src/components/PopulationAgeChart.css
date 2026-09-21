@@ -183,6 +183,10 @@
   background: #2563eb;
 }
 
+.age-chart-legend-dot-selected {
+  background: #1e3a8a;
+}
+
 .age-chart-footer > span:last-child {
   margin-left: auto;
 }

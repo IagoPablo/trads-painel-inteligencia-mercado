@@ -18,7 +18,7 @@ interface MarketRankingProps {
   data: MarketData[];
   sortBy: SortBy;
   selectedMunicipality: string;
-  onSelectMunicipality: (municipality: string) => void;
+  onSelectMunicipality: (municipality: MarketData) => void;
 }
 
 function RankingTooltip({
@@ -95,7 +95,13 @@ function MarketRanking({
       : "Municípios com maior renda domiciliar per capita média.";
 
   function handleBarClick(_entry: unknown, index: number) {
-    const municipality = chartData[index]?.municipality;
+    const municipality = data
+      .filter((item) =>
+        sortBy === "population"
+          ? item.population !== null
+          : item.householdIncome !== null,
+      )
+      .slice(0, 10)[index];
 
     if (!municipality) {
       return;
@@ -161,7 +167,7 @@ function MarketRanking({
             axisLine={false}
             tickLine={false}
             tick={{
-              fill: "#344054",
+              fill: "rgb(52, 64, 84)",
               fontSize: 12,
               fontWeight: 500,
             }}

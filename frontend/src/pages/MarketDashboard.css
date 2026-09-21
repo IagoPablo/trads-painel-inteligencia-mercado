@@ -1,3 +1,81 @@
+.dashboard-topbar {
+  width: 100%;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.dashboard-topbar-inner {
+  display: flex;
+  align-items: center;
+
+  width: min(1280px, calc(100% - 40px));
+  min-height: 68px;
+
+  margin: 0 auto;
+}
+
+.dashboard-brand-button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 7px 10px;
+  margin: 0;
+
+  border: 0;
+  border-radius: 10px;
+
+  background: transparent;
+  color: inherit;
+
+  cursor: pointer;
+  text-align: left;
+
+  transition:
+    background-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.dashboard-brand-button:hover {
+  background: #f8fafc;
+}
+
+.dashboard-brand-button:active {
+  transform: translateY(1px);
+}
+
+.dashboard-brand-button:focus-visible {
+  outline: 3px solid rgba(29, 78, 216, 0.16);
+  outline-offset: 2px;
+}
+
+.dashboard-brand-mark {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
+
+.dashboard-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dashboard-brand strong {
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+}
+
+.dashboard-brand span {
+  color: var(--color-text-muted);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
 .market-dashboard {
   width: min(1280px, calc(100% - 40px));
   margin: 0 auto;
@@ -9,12 +87,15 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 24px;
+
   margin-bottom: 28px;
 }
 
 .dashboard-header h1 {
   margin: 0 0 8px;
+
   color: var(--color-text);
+
   font-size: 32px;
   font-weight: 700;
   line-height: 1.2;
@@ -23,7 +104,9 @@
 
 .dashboard-header p {
   margin: 0;
+
   color: var(--color-text-secondary);
+
   font-size: 15px;
   line-height: 1.5;
 }
@@ -32,6 +115,7 @@
   display: flex;
   flex-direction: column;
   gap: 28px;
+
   margin-top: 24px;
 }
 
@@ -78,6 +162,21 @@
 }
 
 @media (max-width: 640px) {
+  .dashboard-topbar-inner {
+    width: min(100% - 24px, 720px);
+    min-height: 58px;
+  }
+
+  .dashboard-brand-button {
+    gap: 10px;
+    padding: 6px 8px;
+  }
+
+  .dashboard-brand-mark {
+    width: 30px;
+    height: 30px;
+  }
+
   .market-dashboard {
     width: min(100% - 24px, 720px);
     padding: 24px 0 48px;

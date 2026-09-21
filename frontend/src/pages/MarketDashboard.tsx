@@ -20,9 +20,10 @@ import type {
 } from "../types/market-data";
 
 import type { Municipality } from "../types/location";
-import type {
-  AgeGroup,
-  MarketFilters as MarketFiltersState,
+import {
+  type AgeGroup,
+  type MarketFilters as MarketFiltersState,
+  IBGE_STATE_CODE_TO_UF,
 } from "../types/market-filters";
 
 import "./MarketDashboard.css";
@@ -76,9 +77,7 @@ function MarketDashboard() {
         setMarketSummary(summaryResponse);
 
         if (appliedFilters.municipality) {
-          const selectedMunicipality = municipalities.find(
-            (municipality) => municipality.name === appliedFilters.municipality,
-          );
+          const selectedMunicipality = marketResponse.data[0];
 
           if (!selectedMunicipality) {
             throw new Error("Município selecionado não encontrado.");
@@ -141,91 +140,162 @@ function MarketDashboard() {
       ? marketSummary.ageGroups[selectedAgeGroup]
       : null;
 
-  return (
-    <main className="market-dashboard">
-      <header className="dashboard-header">
-        <h1>Painel de Inteligência de Mercado</h1>
+  const scrollToDashboardTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
 
-        <p>Análise de mercado por região e público.</p>
+  return (
+    <>
+      <header className="dashboard-topbar">
+        <div className="dashboard-topbar-inner">
+          <button
+            type="button"
+            className="dashboard-brand-button"
+            onClick={() => {
+              setFilters(initialFilters);
+              setAppliedFilters(initialFilters);
+            }}
+            aria-label="Voltar ao início"
+          >
+            <img
+              src="/Tradsmarket.svg"
+              alt=""
+              className="dashboard-brand-mark"
+            />
+
+            <div className="dashboard-brand">
+              <strong>TRADS</strong>
+              <span>Inteligência de Mercado</span>
+            </div>
+          </button>
+        </div>
       </header>
 
-      <MarketFilters
-        filters={filters}
-        municipalities={municipalities}
-        onChange={setFilters}
-        onAnalyze={() => setAppliedFilters(filters)}
-      />
+      <main className="market-dashboard">
+        <header className="dashboard-header">
+          <div>
+            <h1>Painel de Inteligência de Mercado</h1>
 
-      {isLoading && (
-        <section className="dashboard-state">
-          <p>Carregando dados de mercado...</p>
-        </section>
-      )}
+            <p>Análise de mercado por região e público.</p>
+          </div>
+        </header>
 
-      {!isLoading && error && (
-        <section className="dashboard-state dashboard-error">
-          <p>{error}</p>
-        </section>
-      )}
+        <MarketFilters
+          filters={filters}
+          municipalities={municipalities}
+          onChange={setFilters}
+          onAnalyze={() => setAppliedFilters(filters)}
+        />
 
-      {!isLoading && !error && (
-        <div className="dashboard-content">
-          {marketAnalysis ? (
-            <MarketAnalysisSummary
-              data={marketAnalysis}
-              ageGroup={selectedAgeGroup}
-              ageGroupPopulation={selectedAgeGroupPopulation}
-            />
-          ) : (
-            marketSummary && (
-              <MarketSummary
-                summary={marketSummary}
-                ageGroup={appliedFilters.ageGroup}
-                state={appliedFilters.state}
-                municipality={appliedFilters.municipality}
+        {isLoading && (
+          <section className="dashboard-state">
+            <p>Carregando dados de mercado...</p>
+          </section>
+        )}
+
+        {!isLoading && error && (
+          <section className="dashboard-state dashboard-error">
+            <p>{error}</p>
+          </section>
+        )}
+
+        {!isLoading && !error && (
+          <div className="dashboard-content">
+            {marketAnalysis ? (
+              <MarketAnalysisSummary
+                data={marketAnalysis}
+                ageGroup={selectedAgeGroup}
+                ageGroupPopulation={selectedAgeGroupPopulation}
               />
-            )
-          )}
-
-          <div className="dashboard-charts">
-            <div className="market-ranking-wrapper">
-              <MarketRanking
-                data={rankingData}
-                sortBy={appliedFilters.sortBy}
-                selectedMunicipality={appliedFilters.municipality}
-                onSelectMunicipality={(municipality) => {
-                  setFilters((current) => ({
-                    ...current,
-                    municipality,
-                  }));
-
-                  setAppliedFilters((current) => ({
-                    ...current,
-                    municipality,
-                  }));
-                }}
-              />
-
-              {appliedFilters.municipality && marketData[0] && (
-                <MarketRankingPosition
-                  marketData={marketData[0]}
-                  sortBy={appliedFilters.sortBy}
-                  state={marketData[0].state ?? ""}
+            ) : (
+              marketSummary && (
+                <MarketSummary
+                  summary={marketSummary}
+                  ageGroup={appliedFilters.ageGroup}
+                  state={appliedFilters.state}
+                  municipality={appliedFilters.municipality}
                 />
+              )
+            )}
+
+            <div className="dashboard-charts">
+              <div className="market-ranking-wrapper">
+                <MarketRanking
+                  data={rankingData}
+                  sortBy={appliedFilters.sortBy}
+                  selectedMunicipality={appliedFilters.municipality}
+                  onSelectMunicipality={(selectedMunicipality) => {
+                    const stateCode = selectedMunicipality.stateCode
+                      ? IBGE_STATE_CODE_TO_UF[selectedMunicipality.stateCode]
+                      : "";
+
+                    if (!stateCode) {
+                      console.error(
+                        "Código de estado IBGE não reconhecido:",
+                        selectedMunicipality.stateCode,
+                      );
+
+                      return;
+                    }
+
+                    setFilters((current) => ({
+                      ...current,
+                      state: stateCode,
+                      municipality: selectedMunicipality.municipality,
+                    }));
+
+                    setAppliedFilters((current) => ({
+                      ...current,
+                      state: stateCode,
+                      municipality: selectedMunicipality.municipality,
+                    }));
+
+                    scrollToDashboardTop();
+                  }}
+                />
+
+                {appliedFilters.municipality && marketData[0] && (
+                  <MarketRankingPosition
+                    marketData={marketData[0]}
+                    sortBy={appliedFilters.sortBy}
+                    state={marketData[0].state ?? ""}
+                  />
+                )}
+              </div>
+
+              {marketAnalysis && (
+                <>
+                  <PopulationAgeChart
+                    data={marketAnalysis}
+                    selectedAgeGroup={selectedAgeGroup}
+                    onSelectAgeGroup={(ageGroup) => {
+                      setFilters((current) => ({
+                        ...current,
+                        ageGroup: ageGroup as AgeGroup,
+                      }));
+
+                      setAppliedFilters((current) => ({
+                        ...current,
+                        ageGroup: ageGroup as AgeGroup,
+                      }));
+                      scrollToDashboardTop();
+                    }}
+                  />
+
+                  <AnsAgeDistributionChart
+                    data={marketAnalysis}
+                    selectedAgeGroup={selectedAgeGroup}
+                  />
+                </>
               )}
             </div>
-
-            {marketAnalysis && (
-              <>
-                <PopulationAgeChart data={marketAnalysis} />
-
-                <AnsAgeDistributionChart data={marketAnalysis} />
-              </>
-            )}
           </div>
-        </div>
-      )}
-    </main>
+        )}
+      </main>
+    </>
   );
 }
 
