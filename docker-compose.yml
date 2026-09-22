@@ -35,6 +35,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       PORT: 3000
       FRONTEND_URL: http://localhost:5173
+      SYNC_API_KEY: ${SYNC_API_KEY}
 
     ports:
       - "3000:3000"

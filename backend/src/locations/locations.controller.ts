@@ -1,5 +1,7 @@
-import { Controller, Get, Post, Query } from '@nestjs/common';
+import { Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+
 import { LocationsService } from './locations.service';
+import { SyncApiKeyGuard } from '../common/guards/sync-api-key.guard';
 
 @Controller('locations')
 export class LocationsController {
@@ -16,6 +18,7 @@ export class LocationsController {
   }
 
   @Post('sync')
+  @UseGuards(SyncApiKeyGuard)
   syncLocations() {
     return this.locationsService.syncLocations();
   }
