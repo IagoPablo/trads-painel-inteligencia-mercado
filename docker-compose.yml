@@ -5,12 +5,12 @@ services:
     restart: unless-stopped
 
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-trads_market}
+      POSTGRES_USER: ${POSTGRES_USER:-trads}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-trads_dev_password}
 
     ports:
-      - "${POSTGRES_PORT}:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
 
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -19,7 +19,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}",
+          "pg_isready -U ${POSTGRES_USER:-trads} -d ${POSTGRES_DB:-trads_market}",
         ]
       interval: 5s
       timeout: 5s
@@ -32,10 +32,10 @@ services:
     restart: unless-stopped
 
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-trads}:${POSTGRES_PASSWORD:-trads_dev_password}@postgres:5432/${POSTGRES_DB:-trads_market}
       PORT: 3000
       FRONTEND_URL: http://localhost:5173
-      SYNC_API_KEY: ${SYNC_API_KEY}
+      SYNC_API_KEY: ${SYNC_API_KEY:-trads_dev_sync_key}
 
     ports:
       - "3000:3000"
@@ -44,12 +44,7 @@ services:
       postgres:
         condition: service_healthy
 
-    command:
-      [
-        "sh",
-        "-c",
-        "npx prisma migrate deploy && node dist/src/main.js",
-      ]
+    command: ["sh", "-c", "npx prisma migrate deploy && node dist/src/main.js"]
 
   frontend:
     build:
@@ -64,6 +59,6 @@ services:
 
     depends_on:
       - backend
-      
+
 volumes:
   postgres_data:
