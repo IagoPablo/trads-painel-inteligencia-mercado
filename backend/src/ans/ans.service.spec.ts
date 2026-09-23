@@ -464,7 +464,7 @@ describe('AnsService', () => {
       });
     });
   });
-  
+
   describe('syncCoverageData', () => {
     it('should process, aggregate, transform and persist coverage data', async () => {
       const profiles = new Map([

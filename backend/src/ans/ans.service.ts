@@ -459,6 +459,13 @@ export class AnsService {
       },
     );
   }
+
+  async hasData(): Promise<boolean> {
+    const count = await this.prisma.ansMunicipalData.count();
+
+    return count > 0;
+  }
+
   public async syncCoverageData() {
     const profiles = await this.processCoverageRecords();
 
