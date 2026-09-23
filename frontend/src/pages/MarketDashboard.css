@@ -125,6 +125,10 @@
   gap: 20px;
 }
 
+.dashboard-charts > :nth-child(3) {
+  grid-column: 1 / -1;
+}
+
 .dashboard-state {
   margin-top: 24px;
   padding: 24px;
