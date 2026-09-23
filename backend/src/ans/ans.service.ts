@@ -485,6 +485,28 @@ export class AnsService {
       municipalities: municipalDataRecords.length,
     };
   }
+
+  async getStateTotalBeneficiaries(
+    stateCode: string,
+    referencePeriod: number,
+  ): Promise<number> {
+    const result = await this.prisma.ansMunicipalData.aggregate({
+      where: {
+        referencePeriod,
+        location: {
+          parent: {
+            ibgeCode: stateCode,
+          },
+        },
+      },
+      _sum: {
+        beneficiariesTotal: true,
+      },
+    });
+
+    return Number(result._sum.beneficiariesTotal ?? 0);
+  }
+
   async getMunicipalityData(ibgeCode: string) {
     const municipality = await this.prisma.location.findUnique({
       where: {

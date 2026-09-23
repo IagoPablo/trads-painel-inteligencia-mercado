@@ -17,6 +17,7 @@ describe('MarketAnalysisService', () => {
 
   const ansService = {
     getMunicipalityData: jest.fn(),
+    getStateTotalBeneficiaries: jest.fn(),
   };
 
   beforeEach(() => {
@@ -62,6 +63,14 @@ describe('MarketAnalysisService', () => {
     });
 
     ansService.getMunicipalityData.mockResolvedValue({
+      municipality: {
+        code: '2507507',
+        name: 'João Pessoa',
+        state: {
+          code: '25',
+          name: 'Paraíba',
+        },
+      },
       referencePeriod: 2026,
       beneficiaries: {
         medical: 279715,
@@ -106,6 +115,8 @@ describe('MarketAnalysisService', () => {
         },
       ],
     });
+
+    ansService.getStateTotalBeneficiaries.mockResolvedValue(1000000);
 
     const result = await service.getMunicipalityAnalysis('2507507');
 
@@ -155,12 +166,13 @@ describe('MarketAnalysisService', () => {
         },
       },
 
-      insights: {
-        largestPopulationAgeGroup: {
-          ageGroup: '0-14',
-          population: 162069,
-        },
+      marketContext: {
+        stateTotalBeneficiaries: 1000000,
+        municipalityTotalBeneficiaries: 663921,
+        stateMarketShare: 66.3921,
+      },
 
+      insights: {
         largestBeneficiaryAgeGroup: {
           ageGroup: '30 a 39 anos',
           beneficiaries: 128113,
@@ -204,6 +216,14 @@ describe('MarketAnalysisService', () => {
     });
 
     ansService.getMunicipalityData.mockResolvedValue({
+      municipality: {
+        code: '2507507',
+        name: 'João Pessoa',
+        state: {
+          code: '25',
+          name: 'Paraíba',
+        },
+      },
       referencePeriod: 2026,
       beneficiaries: {
         medical: 100,
@@ -220,6 +240,8 @@ describe('MarketAnalysisService', () => {
         },
       ],
     });
+
+    ansService.getStateTotalBeneficiaries.mockResolvedValue(1000);
 
     const result = await service.getMunicipalityAnalysis('2507507');
 

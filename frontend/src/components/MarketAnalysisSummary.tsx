@@ -7,12 +7,27 @@ interface MarketAnalysisSummaryProps {
   ageGroupPopulation: number | null;
 }
 
+function formatMarketShare(value: number | null) {
+  if (value === null) {
+    return "—";
+  }
+
+  if (value > 0 && value < 0.01) {
+    return "<0,01%";
+  }
+
+  return `${value.toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}%`;
+}
+
 function MarketAnalysisSummary({
   data,
   ageGroup,
   ageGroupPopulation,
 }: MarketAnalysisSummaryProps) {
-  const { municipality, ibge, ans, insights } = data;
+  const { municipality, ibge, ans, marketContext, insights } = data;
 
   return (
     <section className="market-analysis-summary">
@@ -27,6 +42,7 @@ function MarketAnalysisSummary({
 
         <div className="analysis-reference">
           <span>Fontes</span>
+
           <strong>
             IBGE {ibge.referencePeriod} · ANS {ans.referencePeriod}
           </strong>
@@ -97,28 +113,17 @@ function MarketAnalysisSummary({
           <div>
             <span className="section-eyebrow">Perfil do mercado</span>
 
-            <h3>Principais concentrações</h3>
+            <h3>Concentrações de mercado</h3>
           </div>
 
-          <p>Faixas com maior concentração de população e beneficiários.</p>
+          <p>
+            Faixas com maior concentração de beneficiários por tipo de plano.
+          </p>
         </div>
 
         <div className="market-analysis-insight-grid">
           <article className="analysis-insight">
-            <span>Maior faixa populacional</span>
-
-            <strong>{insights.largestPopulationAgeGroup.ageGroup}</strong>
-
-            <small>
-              {insights.largestPopulationAgeGroup.population.toLocaleString(
-                "pt-BR",
-              )}{" "}
-              pessoas · IBGE
-            </small>
-          </article>
-
-          <article className="analysis-insight">
-            <span>Maior faixa de beneficiários</span>
+            <span>Maior concentração de beneficiários</span>
 
             <strong>
               {insights.largestBeneficiaryAgeGroup?.ageGroup ?? "—"}
@@ -134,7 +139,7 @@ function MarketAnalysisSummary({
           </article>
 
           <article className="analysis-insight">
-            <span>Maior faixa médica</span>
+            <span>Maior concentração médica</span>
 
             <strong>{insights.largestMedicalAgeGroup?.ageGroup ?? "—"}</strong>
 
@@ -148,7 +153,7 @@ function MarketAnalysisSummary({
           </article>
 
           <article className="analysis-insight">
-            <span>Maior faixa odontológica</span>
+            <span>Maior concentração odontológica</span>
 
             <strong>{insights.largestDentalAgeGroup?.ageGroup ?? "—"}</strong>
 
@@ -158,6 +163,21 @@ function MarketAnalysisSummary({
                     "pt-BR",
                   )} beneficiários · ANS`
                 : "Dados indisponíveis"}
+            </small>
+          </article>
+
+          <article className="analysis-insight">
+            <span>Participação no mercado estadual</span>
+
+            <strong>
+              {marketContext.stateMarketShare !== null
+                ? formatMarketShare(marketContext.stateMarketShare)
+                : "—"}
+            </strong>
+
+            <small>
+              dos beneficiários de planos de {municipality.state.name} · ANS{" "}
+              {ans.referencePeriod}
             </small>
           </article>
         </div>

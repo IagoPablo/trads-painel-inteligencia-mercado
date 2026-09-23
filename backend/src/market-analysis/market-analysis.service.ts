@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { AnsService } from '../ans/ans.service';
 import { MarketDataService } from '../market-data/market-data.service';
+import { STATE_CODES } from '../common/constants/state-codes';
 
 @Injectable()
 export class MarketAnalysisService {
@@ -19,6 +20,18 @@ export class MarketAnalysisService {
     if (!marketData || !ansData) {
       return null;
     }
+    const stateTotalBeneficiaries =
+      await this.ansService.getStateTotalBeneficiaries(
+        ansData.municipality.state.code,
+        ansData.referencePeriod,
+      );
+
+    const municipalityTotalBeneficiaries = ansData.beneficiaries.total;
+
+    const stateMarketShare =
+      stateTotalBeneficiaries > 0
+        ? (municipalityTotalBeneficiaries / stateTotalBeneficiaries) * 100
+        : null;
 
     const ageGroups = new Map<
       string,
@@ -56,15 +69,6 @@ export class MarketAnalysisService {
       }
     > = Object.fromEntries(ageGroups);
 
-    const populationAgeGroups = Object.entries(marketData.ageGroups) as [
-      string,
-      number,
-    ][];
-
-    const populationAgeGroup = populationAgeGroups.reduce((highest, current) =>
-      current[1] > highest[1] ? current : highest,
-    );
-
     const ansAgeGroupEntries = Object.entries(ansAgeGroups) as [
       string,
       {
@@ -90,13 +94,13 @@ export class MarketAnalysisService {
           beneficiaries: ansData.beneficiaries,
           ageGroups: ansAgeGroups,
         },
+        marketContext: {
+          stateTotalBeneficiaries,
+          municipalityTotalBeneficiaries,
+          stateMarketShare,
+        },
 
         insights: {
-          largestPopulationAgeGroup: {
-            ageGroup: populationAgeGroup[0],
-            population: populationAgeGroup[1],
-          },
-
           largestBeneficiaryAgeGroup: null,
           largestMedicalAgeGroup: null,
           largestDentalAgeGroup: null,
@@ -134,12 +138,13 @@ export class MarketAnalysisService {
         ageGroups: ansAgeGroups,
       },
 
-      insights: {
-        largestPopulationAgeGroup: {
-          ageGroup: populationAgeGroup[0],
-          population: populationAgeGroup[1],
-        },
+      marketContext: {
+        stateTotalBeneficiaries,
+        municipalityTotalBeneficiaries,
+        stateMarketShare,
+      },
 
+      insights: {
         largestBeneficiaryAgeGroup: {
           ageGroup: beneficiaryAgeGroup[0],
           beneficiaries: beneficiaryAgeGroup[1].total,

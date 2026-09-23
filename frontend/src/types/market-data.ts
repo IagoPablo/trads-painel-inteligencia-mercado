@@ -68,12 +68,14 @@ export interface MarketAnalysis {
     };
     ageGroups: Record<string, AnsAgeGroup>;
   };
-  insights: {
-    largestPopulationAgeGroup: {
-      ageGroup: string;
-      population: number;
-    };
 
+  marketContext: {
+    stateTotalBeneficiaries: number;
+    municipalityTotalBeneficiaries: number;
+    stateMarketShare: number | null;
+  };
+
+  insights: {
     largestBeneficiaryAgeGroup: {
       ageGroup: string;
       beneficiaries: number;
