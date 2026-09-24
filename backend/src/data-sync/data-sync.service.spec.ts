@@ -177,4 +177,44 @@ describe('DataSyncService', () => {
 
     loggerErrorSpy.mockRestore();
   });
+
+  it('should synchronize IBGE data for the configured reference period', async () => {
+    await service.syncIbgeData(2022);
+
+    expect(marketDataService.syncPopulation).toHaveBeenCalledWith(2022);
+
+    expect(marketDataService.syncHouseholdIncome).toHaveBeenCalledWith(2022);
+
+    expect(marketDataService.syncAgeGroups).toHaveBeenCalledWith(2022);
+  });
+
+  it('should continue handling scheduled IBGE synchronization when it succeeds', async () => {
+    await service.handleIbgeSync();
+
+    expect(marketDataService.syncPopulation).toHaveBeenCalledWith(2022);
+
+    expect(marketDataService.syncHouseholdIncome).toHaveBeenCalledWith(2022);
+
+    expect(marketDataService.syncAgeGroups).toHaveBeenCalledWith(2022);
+  });
+  it('should handle errors during scheduled IBGE synchronization', async () => {
+    marketDataService.syncPopulation.mockRejectedValue(
+      new Error('IBGE unavailable'),
+    );
+
+    const loggerErrorSpy = jest
+      .spyOn((service as any).logger, 'error')
+      .mockImplementation(() => undefined);
+
+    await expect(service.handleIbgeSync()).resolves.toBeUndefined();
+
+    expect(marketDataService.syncPopulation).toHaveBeenCalledWith(2022);
+
+    expect(loggerErrorSpy).toHaveBeenCalledWith(
+      'Falha na atualização agendada dos dados do IBGE.',
+      expect.stringContaining('IBGE unavailable'),
+    );
+
+    loggerErrorSpy.mockRestore();
+  });
 });

@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 
+import { Cron } from '@nestjs/schedule';
 import { LocationsService } from '../locations/locations.service';
 import { MarketDataService } from '../market-data/market-data.service';
 import { AnsService } from '../ans/ans.service';
@@ -86,5 +87,41 @@ export class DataSyncService implements OnApplicationBootstrap {
     }
 
     this.logger.log('Sincronização inicial dos dados concluída.');
+  }
+
+  async syncIbgeData(referencePeriod: number) {
+    this.logger.log(
+      `Iniciando atualização dos dados do IBGE para ${referencePeriod}...`,
+    );
+
+    await this.marketDataService.syncPopulation(referencePeriod);
+    this.logger.log('População atualizada.');
+
+    await this.marketDataService.syncHouseholdIncome(referencePeriod);
+    this.logger.log('Renda domiciliar atualizada.');
+
+    await this.marketDataService.syncAgeGroups(referencePeriod);
+    this.logger.log('Faixas etárias atualizadas.');
+
+    this.logger.log(
+      `Atualização dos dados do IBGE para ${referencePeriod} concluída.`,
+    );
+  }
+
+  @Cron('0 0 3 1 * *', {
+    name: 'ibge-market-data-sync',
+    timeZone: 'America/Sao_Paulo',
+    waitForCompletion: true,
+  })
+  
+  async handleIbgeSync() {
+    try {
+      await this.syncIbgeData(this.marketDataReferencePeriod);
+    } catch (error) {
+      this.logger.error(
+        'Falha na atualização agendada dos dados do IBGE.',
+        error instanceof Error ? error.stack : String(error),
+      );
+    }
   }
 }
