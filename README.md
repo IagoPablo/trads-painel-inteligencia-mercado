@@ -1,10 +1,13 @@
 # Painel de Inteligência de Mercado
+[![CI](https://github.com/IagoPablo/trads-painel-inteligencia-mercado/actions/workflows/ci.yml/badge.svg)](https://github.com/IagoPablo/trads-painel-inteligencia-mercado/actions/workflows/ci.yml)
 
 Painel de Inteligência de Mercado fullstack para análise de dados demográficos do IBGE e cobertura de planos da ANS, desenvolvido com NestJS, React, PostgreSQL e Docker.
 
-**Demonstração:** `<link do deploy>`
-**Status da API:** `<link da API>`
-**Swagger:** `<link do Swagger>`
+**Demonstração:** [trads-market.up.railway.app](https://trads-market.up.railway.app/)
+
+**API:** [trads-market-api.up.railway.app](https://trads-market-api.up.railway.app/)
+
+**Swagger:** [trads-market-api.up.railway.app/api](https://trads-market-api.up.railway.app/api)
 
 ---
 
@@ -33,7 +36,7 @@ docker compose up --build
 Após a inicialização:
 
 * Dashboard: `localhost:5173`
-* Status da API: `localhost:3000`
+* API: `localhost:3000`
 * Swagger: `localhost:3000/api`
 
 Na primeira execução, o sistema realiza a ingestão dos dados públicos do IBGE e da ANS e pode levar alguns minutos para concluir.
